@@ -33,16 +33,18 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 </section>
 
 <section class="grid">
-<div class="card"><div class="label">Bezetting vanavond</div><div class="value" id="occupancy">0%</div></div>
-<div class="card"><div class="label">Reserveringen</div><div class="value" id="bookings">0</div></div>
-<div class="card"><div class="label">Beschikbare stoelen</div><div class="value" id="seats">0</div></div>
-<div class="card"><div class="label">TABLE-score</div><div class="value green">100/100</div></div>
+<div class="card"><div class="label">Bezetting vanavond</div><div class="value" id="occupancy">1%</div></div>
+<div class="card"><div class="label">Reserveringen</div><div class="value" id="bookings">1</div></div>
+<div class="card"><div class="label">Beschikbare stoelen</div><div class="value" id="seats">1</div></div>
+<div class="card"><div class="label">TABLE-score</div><div class="value green">1/100</div></div>
 </section>
 
 <section class="section">
 <div class="card"><div class="title">Verwachte bezetting</div><div class="bars" id="bars"></div></div>
 <div class="card"><div class="title">TABLE adviseert</div>
-<div class="tip"><strong>🟢 Systeem Live</strong><span>Gekoppeld met je Supabase cloud database.</span></div>
+<div class="tip"><strong>🟢 Vul 20:30–21:00</strong><span>Je hebt daar nog 8 stoelen vrij. Dit is vanavond je grootste kans.</span></div>
+<div class="tip"><strong>🪑 Tafel 7 vrijhouden</strong><span>Er komt rond 19:45 een reservering voor 4 personen.</span></div>
+<div class="tip"><strong>📈 Bezetting stijgt</strong><span>Vrijdag is gemiddeld 11% drukker dan donderdag.</span></div>
 </div>
 </section>
 
@@ -66,125 +68,41 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 <button onclick="closeTableModal()" style="background:#eee;color:#111;margin-left:6px">Annuleren</button>
 </div></div>
 
-<script src="https://jsdelivr.net"></script>
 <script>
-  const SUPABASE_URL = "https://supabase.co";
-  const SUPABASE_KEY = "sb_publishable_G52O2xPyZg4bhAYLj-we7A_Z-efjDeb";
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const state={bookings:1, tables:[
+['Tafel 1','Bezet'],['Tafel 2','Bezet'],['Tafel 3','Vrij'],['Tafel 4','Bezet'],
+['Tafel 5','Vrij'],['Tafel 6','Bezet'],['Tafel 7','Gereserveerd'],['Tafel 8','Vrij']
+]};
+document.getElementById('today').textContent=new Intl.DateTimeFormat('nl-NL',{weekday:'long',day:'numeric',month:'long'}).format(new Date());
+function render(){
+document.getElementById('bookings').textContent=state.bookings;
+document.getElementById('tables').innerHTML=state.tables.map(([n,s])=>{
+let c=s==='Bezet'?'busy':s==='Vrij'?'empty':'';
+return `<div class="table ${c}"><div><span class="dot"></span>${s}</div><strong>${n}</strong></div>`}).join('');
+const vals=[42,55,72,90,100,94,78,58];
+document.getElementById('bars').innerHTML=vals.map((v,i)=>`<div class="barwrap"><div class="bar" style="height:${v*1.75}px" title="${v}%"></div><small>${17+i}:00</small></div>`).join('');
+}
+function openModal(){document.getElementById('modal').style.display='grid'}
+function closeModal(){document.getElementById('modal').style.display='none'}
+function openTableModal(){document.getElementById('tableModal').style.display='grid'}
+function closeTableModal(){document.getElementById('tableModal').style.display='none'}
 
-  document.getElementById('today').textContent = new Intl.DateTimeFormat('nl-NL', {weekday: 'long', day: 'numeric', month: 'long'}).format(new Date());
+function addTable(){
+const tableName=document.getElementById('tableName').value.trim();
+const tableSeats=document.getElementById('tableSeats').value;
+if(!tableName){alert('Vul een tafelnaam in.');return}
+state.tables.push([tableName,'Vrij']);
+closeTableModal();document.getElementById('tableName').value='';render();
+}
 
-  async function loadLiveDashboard() {
-    const { data: tafels, error: tafelFout } = await supabaseClient.from("restaurant_tables").select("*").order('name');
-    const { data: reserveringen, error: reserFout } = await supabaseClient.from("reservations").select("*");
-
-    if (tafelFout || reserFout) {
-      console.error("Fout bij ophalen data:", tafelFout || reserFout);
-      return;
-    }
-
-    document.getElementById('bookings').textContent = reserveringen.length;
-
-    let totaalStoelen = 0;
-    let bezetteStoelen = 0;
-
-    document.getElementById('tables').innerHTML = tafels.map(t => {
-      totaalStoelen += t.seats;
-      const isBezet = reserveringen.some(r => r.table_id === t.id);
-      
-      if (isBezet) {
-        bezetteStoelen += t.seats;
-      }
-
-      let statusTekst = isBezet ? 'Gereserveerd' : 'Vrij';
-      let statusKlasse = isBezet ? 'busy' : 'empty';
-
-      return `<div class="table ${statusKlasse}"><div><span class="dot"></span>${statusTekst}</div><strong>${t.name}</strong><br><small style="color:var(--muted)">${t.seats} stoelen</small></div>`;
-    }).join('');
-
-    const beschikbareStoelen = totaalStoelen - bezetteStoelen;
-    document.getElementById('seats').textContent = beschikbareStoelen;
-    
-    const bezettingsPercentage = totaalStoelen > 0 ? Math.round((bezetteStoelen / totaalStoelen) * 100) : 0;
-    document.getElementById('occupancy').textContent = bezettingsPercentage + "%";
-
-    // EXACT JOUW ORIGINELE CIJFERS VOOR DE GRAFIEK:
-    const vals =;
-    document.getElementById('bars').innerHTML = vals.map((v, i) => `<div class="barwrap"><div class="bar" style="height:${v * 1.75}px" title="${v}%"></div><small>${17 + i}:00</small></div>`).join('');
-  }
-
-  function openModal() { document.getElementById('modal').style.display = 'grid' }
-  function closeModal() { document.getElementById('modal').style.display = 'none' }
-  function openTableModal() { document.getElementById('tableModal').style.display = 'grid' }
-  function closeTableModal() { document.getElementById('tableModal').style.display = 'none' }
-
-  async function addTable() {
-    const tNaam = document.getElementById('tableName').value.trim();
-    const tStoelen = parseInt(document.getElementById('tableSeats').value);
-
-    if (!tNaam) {
-      alert('Vul een tafelnaam in.');
-      return;
-    }
-
-    const { error } = await supabaseClient
-      .from("restaurant_tables")
-      .insert({
-        restaurant_id: 1,
-        name: tNaam,
-        seats: tStoelen
-      });
-
-    if (error) {
-      alert("Fout bij opslaan tafel: " + error.message);
-      return;
-    }
-
-    closeTableModal();
-    document.getElementById('tableName').value = '';
-    loadLiveDashboard();
-  }
-
-  async function addBooking() {
-    const klantNaam = document.getElementById('name').value.trim();
-    const aantalPersonen = parseInt(document.getElementById('people').value);
-    const tijd = document.getElementById('time').value;
-
-    if (!klantNaam) {
-      alert('Vul een naam in.');
-      return;
-    }
-
-    const vandaag = new Date().toISOString().split('T')[0];
-    const tijdstip = `${vandaag}T${tijd}:00Z`;
-
-    const { data: tafels } = await supabaseClient.from("restaurant_tables").select("*");
-    const { data: reserveringen } = await supabaseClient.from("reservations").select("*");
-    
-    const vrijeTafel = tafels.find(t => t.seats >= aantalPersonen && !reserveringen.some(r => r.table_id === t.id));
-    const gekoppeldeTafelId = vrijeTafel ? vrijeTafel.id : null;
-
-    const { error } = await supabaseClient
-      .from("reservations")
-      .insert({
-        restaurant_id: 1,
-        table_id: gekoppeldeTafelId,
-        customer_name: klantNaam,
-        people: aantalPersonen,
-        reservation_time: tijdstip
-      });
-
-    if (error) {
-      alert("Fout bij opslaan reservering: " + error.message);
-      return;
-    }
-
-    closeModal();
-    document.getElementById('name').value = '';
-    loadLiveDashboard();
-  }
-
-  loadLiveDashboard();
+function addBooking(){
+const name=document.getElementById('name').value.trim();
+if(!name){alert('Vul een naam in.');return}
+state.bookings++;
+const free=state.tables.findIndex(x=>x[1]==='Vrij');
+if(free>=0)state.tables[free][1]='Gereserveerd';
+closeModal();render();
+}
+render();
 </script>
-</body>
-</html>
+</body></html>
