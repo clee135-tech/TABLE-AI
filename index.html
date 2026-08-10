@@ -36,7 +36,7 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 <div class="card"><div class="label">Bezetting vanavond</div><div class="value" id="occupancy">0%</div></div>
 <div class="card"><div class="label">Reserveringen</div><div class="value" id="bookings">0</div></div>
 <div class="card"><div class="label">Beschikbare stoelen</div><div class="value" id="seats">0</div></div>
-<div class="card"><div class="label">TABLE-score</div><div class="value green" id="score">100/100</div></div>
+<div class="card"><div class="label">TABLE-score</div><div class="value green" id="score">0/100</div></div>
 </section>
 
 <section class="section">
@@ -67,7 +67,7 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 </div></div>
 
 <script>
-// We beginnen met 0 reserveringen en een lege lijst, maar we vangen de 0-fouten op in de berekening
+// We starten met een lege lijst, de cijfers tonen puur nul op het scherm
 const state = {
   bookings: 0,
   tables: []
@@ -76,7 +76,7 @@ const state = {
 document.getElementById('today').textContent = new Intl.DateTimeFormat('nl-NL', {weekday: 'long', day: 'numeric', month: 'long'}).format(new Date());
 
 function render() {
-  // Update aantal reserveringen
+  // Toon aantal reserveringen op het scherm
   document.getElementById('bookings').textContent = state.bookings;
 
   let totaalStoelen = 0;
@@ -89,15 +89,16 @@ function render() {
     }
   });
 
-  // Toon beschikbare stoelen (als er geen tafels zijn, toon 0)
-  document.getElementById('seats').textContent = totaalStoelen;
+  // Toon stoelen (als de lijst leeg is, dwingen we het scherm naar 0)
+  document.getElementById('seats').textContent = state.tables.length > 0 ? totaalStoelen : 0;
 
-  // 🛠️ FIX: Als er 0 tafels zijn, voorkom delen door 0 en zet direct op 0%
-  let percentage = state.tables.length > 0 ? Math.round((bezetteTafels / state.tables.length) * 100) : 0;
+  // BEREKENING TRUC: Als de lijst leeg is, doet de code alsof het 0% is zonder te crashen
+  let deler = state.tables.length > 0 ? state.tables.length : 1; 
+  let percentage = state.tables.length > 0 ? Math.round((bezetteTafels / deler) * 100) : 0;
   document.getElementById('occupancy').textContent = percentage + "%";
 
-  // 🛠️ FIX: Als er geen tafels zijn, is de TABLE-score standaard 100
-  let score = state.tables.length > 0 ? Math.round(100 - (percentage / 2)) : 100;
+  // TABLE-score weergave op het scherm
+  let score = state.tables.length > 0 ? Math.round(100 - (percentage / 2)) : 0;
   document.getElementById('score').textContent = score + "/100";
 
   // Teken de tafels op het scherm
@@ -141,13 +142,13 @@ function addBooking() {
     return;
   }
   
-  // Zoek de eerste tafel die nog op 'Vrij' staat
+  // Zoek de eerste tafel die nog Vrij is
   const freeIndex = state.tables.findIndex(x => x[1] === 'Vrij');
   if (freeIndex >= 0) {
     state.tables[freeIndex][1] = 'Gereserveerd';
     state.bookings++;
   } else {
-    alert('Geen vrije tafels beschikbaar!');
+    alert('Geen vrije tafels beschikbaar! Voeg eerst een tafel toe.');
   }
   
   closeModal();
@@ -155,7 +156,7 @@ function addBooking() {
   render();
 }
 
-// Eerste keer netjes opstarten
+// Start het scherm direct op
 render();
 </script>
 </body>
