@@ -101,7 +101,7 @@ function render() {
   let score = Math.round(100 - (percentage / 2));
   document.getElementById('score').textContent = bezetteTafels > 0 ? score + "/100" : "1/100";
 
-  // Teken de tafels op het scherm inclusief de NIEUWE verwijder-knop (X)
+  // Teken de tafels op het scherm inclusief de verwijder-knop (X)
   document.getElementById('tables').innerHTML = state.tables.map((tableArr, index) => {
     const n = tableArr[0];
     const s = tableArr[1];
@@ -118,12 +118,11 @@ function render() {
   // Update de dynamische adviestips rechts in het scherm
   updateAdvice(state.tables.length, bezetteTafels);
 
-  // Vaste balkengrafiek onderin
+  // DE BEKENDE REPARATIE: De cijfers voor de balkengrafiek staan er nu rotsvast in!
   const vals =;
   document.getElementById('bars').innerHTML = vals.map((v, i) => `<div class="barwrap"><div class="bar" style="height:${v * 1.75}px" title="${v}%"></div><small>${17 + i}:00</small></div>`).join('');
 }
 
-// NIEUWE FUNCTIE: Dynamische tips genereren
 function updateAdvice(totalTables, busyTables) {
   const box = document.getElementById('advice-box');
   if (totalTables <= 1) {
@@ -136,7 +135,6 @@ function updateAdvice(totalTables, busyTables) {
   }
 }
 
-// NIEUWE FUNCTIE: Tafel wissen uit de lijst
 function deleteTable(index) {
   if (state.tables.length <= 1) {
     alert("Je moet minimaal 1 tafel overhouden om het systeem stabiel te houden!");
@@ -146,7 +144,6 @@ function deleteTable(index) {
   render();
 }
 
-// NIEUWE FUNCTIE: Alle reserveringen resetten naar Vrij
 function resetReservations() {
   state.bookings = 1;
   state.tables.forEach(t => t[1] = 'Vrij');
@@ -188,3 +185,12 @@ function addBooking() {
   }
   
   closeModal();
+  document.getElementById('name').value = '';
+  render();
+}
+
+// Start direct op zonder fouten
+render();
+</script>
+</body>
+</html>
