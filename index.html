@@ -35,7 +35,7 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 <section class="grid">
 <div class="card"><div class="label">Bezetting vanavond</div><div class="value" id="occupancy">0%</div></div>
 <div class="card"><div class="label">Reserveringen</div><div class="value" id="bookings">0</div></div>
-<div class="card"><div class="label">Beschikbare stoelen</div><div class="value" id="seats">1</div></div>
+<div class="card"><div class="label">Beschikbare stoelen</div><div class="value" id="seats">0</div></div>
 <div class="card"><div class="label">TABLE-score</div><div class="value green" id="score">0/100</div></div>
 </section>
 
@@ -67,15 +67,20 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 </div></div>
 
 <script>
+// We starten onzichtbaar met +1 data in de motor om de crash te voorkomen!
 const state = {
-  bookings: 0,
-  tables: []
+  bookings: 1,
+  tables: [
+    ['Virtuele Tafel', 'Vrij', 1]
+  ],
+  isFirstTableAdded: false
 };
 
 document.getElementById('today').textContent = new Intl.DateTimeFormat('nl-NL', {weekday: 'long', day: 'numeric', month: 'long'}).format(new Date());
 
 function render() {
-  document.getElementById('bookings').textContent = state.bookings;
+  // Bereken de echte waarden voor de weergave (We trekken er op het scherm direct -1 vanaf!)
+  let toonBookings = state.isFirstTableAdded ? state.bookings : 0;
 
   let totaalStoelen = 0;
   let bezetteTafels = 0;
@@ -87,20 +92,24 @@ function render() {
     }
   });
 
-  // HIER STAAT DE FIX: Begint standaard op 1 stoel, maar telt mee zodra er echte tafels zijn!
-  document.getElementById('seats').textContent = state.tables.length > 0 ? totaalStoelen : 1;
+  // Toon gecorrigeerde waarden op de website
+  document.getElementById('bookings').textContent = toonBookings;
+  document.getElementById('seats').textContent = state.isFirstTableAdded ? totaalStoelen : 0;
 
-  let deler = state.tables.length > 0 ? state.tables.length : 1; 
-  let percentage = state.tables.length > 0 ? Math.round((bezetteTafels / deler) * 100) : 0;
-  document.getElementById('occupancy').textContent = percentage + "%";
+  // Bereken percentages veilig op basis van de verborgen +1 motor
+  let percentage = Math.round((bezetteTafels / state.tables.length) * 100);
+  document.getElementById('occupancy').textContent = state.isFirstTableAdded ? percentage + "%" : "0%";
 
-  let score = state.tables.length > 0 ? Math.round(100 - (percentage / 2)) : 0;
-  document.getElementById('score').textContent = score + "/100";
+  let score = Math.round(100 - (percentage / 2));
+  document.getElementById('score').textContent = state.isFirstTableAdded ? score + "/100" : "0/100";
 
-  if (state.tables.length === 0) {
+  // Filter de virtuele tafel weg voor de gebruiker zodat het scherm echt leeg start
+  const echteTafels = state.tables.filter(([n]) => n !== 'Virtuele Tafel');
+
+  if (echteTafels.length === 0) {
     document.getElementById('tables').innerHTML = '<p style="color:var(--muted);grid-column:span 4;text-align:center;">Nog geen tafels toegevoegd. Klik op 🪑 ＋ Tafel.</p>';
   } else {
-    document.getElementById('tables').innerHTML = state.tables.map(([n, s, seats]) => {
+    document.getElementById('tables').innerHTML = echteTafels.map(([n, s, seats]) => {
       let c = s === 'Bezet' ? 'busy' : s === 'Vrij' ? 'empty' : 'busy';
       return `<div class="table ${c}"><div><span class="dot"></span>${s}</div><strong>${n}</strong><br><small style="color:var(--muted)">${seats} stoelen</small></div>`;
     }).join('');
@@ -123,6 +132,13 @@ function addTable() {
     return;
   }
   
+  // Gooi de onzichtbare foptabel weg zodra je je échte eerste tafel toevoegt
+  if (!state.isFirstTableAdded) {
+    state.tables = [];
+    state.bookings = 0;
+    state.isFirstTableAdded = true;
+  }
+
   state.tables.push([tableName, 'Vrij', tableSeats]);
   closeTableModal();
   document.getElementById('tableName').value = '';
@@ -136,9 +152,15 @@ function addBooking() {
     return;
   }
   
-  const freeIndex = state.tables.findIndex(x => x === 'Vrij');
+  if (!state.isFirstTableAdded) {
+    alert('Voeg eerst een tafel toe voordat je kunt reserveren!');
+    closeModal();
+    return;
+  }
+
+  const freeIndex = state.tables.findIndex(x => x[1] === 'Vrij');
   if (freeIndex >= 0) {
-    state.tables[freeIndex] = 'Gereserveerd';
+    state.tables[freeIndex][1] = 'Gereserveerd';
     state.bookings++;
   } else {
     alert('Geen vrije tafels beschikbaar! Voeg eerst een tafel toe.');
