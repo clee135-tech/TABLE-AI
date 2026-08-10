@@ -35,7 +35,7 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 <section class="grid">
 <div class="card"><div class="label">Bezetting vanavond</div><div class="value" id="occupancy">0%</div></div>
 <div class="card"><div class="label">Reserveringen</div><div class="value" id="bookings">0</div></div>
-<div class="card"><div class="label">Beschikbare stoelen</div><div class="value" id="seats">0</div></div>
+<div class="card"><div class="label">Beschikbare stoelen</div><div class="value" id="seats">1</div></div>
 <div class="card"><div class="label">TABLE-score</div><div class="value green" id="score">0/100</div></div>
 </section>
 
@@ -67,7 +67,6 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 </div></div>
 
 <script>
-// We starten met een lege lijst, de cijfers tonen puur nul op het scherm
 const state = {
   bookings: 0,
   tables: []
@@ -76,7 +75,6 @@ const state = {
 document.getElementById('today').textContent = new Intl.DateTimeFormat('nl-NL', {weekday: 'long', day: 'numeric', month: 'long'}).format(new Date());
 
 function render() {
-  // Toon aantal reserveringen op het scherm
   document.getElementById('bookings').textContent = state.bookings;
 
   let totaalStoelen = 0;
@@ -89,19 +87,16 @@ function render() {
     }
   });
 
-  // Toon stoelen (als de lijst leeg is, dwingen we het scherm naar 0)
-  document.getElementById('seats').textContent = state.tables.length > 0 ? totaalStoelen : 0;
+  // HIER STAAT DE FIX: Begint standaard op 1 stoel, maar telt mee zodra er echte tafels zijn!
+  document.getElementById('seats').textContent = state.tables.length > 0 ? totaalStoelen : 1;
 
-  // BEREKENING TRUC: Als de lijst leeg is, doet de code alsof het 0% is zonder te crashen
   let deler = state.tables.length > 0 ? state.tables.length : 1; 
   let percentage = state.tables.length > 0 ? Math.round((bezetteTafels / deler) * 100) : 0;
   document.getElementById('occupancy').textContent = percentage + "%";
 
-  // TABLE-score weergave op het scherm
   let score = state.tables.length > 0 ? Math.round(100 - (percentage / 2)) : 0;
   document.getElementById('score').textContent = score + "/100";
 
-  // Teken de tafels op het scherm
   if (state.tables.length === 0) {
     document.getElementById('tables').innerHTML = '<p style="color:var(--muted);grid-column:span 4;text-align:center;">Nog geen tafels toegevoegd. Klik op 🪑 ＋ Tafel.</p>';
   } else {
@@ -111,7 +106,6 @@ function render() {
     }).join('');
   }
 
-  // Balkengrafiek onderin
   const vals =;
   document.getElementById('bars').innerHTML = vals.map((v, i) => `<div class="barwrap"><div class="bar" style="height:${v * 1.75}px" title="${v}%"></div><small>${17 + i}:00</small></div>`).join('');
 }
@@ -142,10 +136,9 @@ function addBooking() {
     return;
   }
   
-  // Zoek de eerste tafel die nog Vrij is
-  const freeIndex = state.tables.findIndex(x => x[1] === 'Vrij');
+  const freeIndex = state.tables.findIndex(x => x === 'Vrij');
   if (freeIndex >= 0) {
-    state.tables[freeIndex][1] = 'Gereserveerd';
+    state.tables[freeIndex] = 'Gereserveerd';
     state.bookings++;
   } else {
     alert('Geen vrije tafels beschikbaar! Voeg eerst een tafel toe.');
@@ -156,7 +149,6 @@ function addBooking() {
   render();
 }
 
-// Start het scherm direct op
 render();
 </script>
 </body>
