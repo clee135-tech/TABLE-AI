@@ -5,23 +5,19 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TABLE — Restaurant Dashboard</title>
 <style>
-:root{--bg:#f5f5f7;--card:#fff;--text:#161616;--muted:#6b6b73;--line:#e8e8ec;--accent:#111;--danger:#df2c2c}
+:root{--bg:#f5f5f7;--card:#fff;--text:#161616;--muted:#6b6b73;--line:#e8e8ec;--accent:#111}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
 header{padding:28px max(20px,calc((100% - 1150px)/2));display:flex;justify-content:space-between;align-items:center;background:#fff;border-bottom:1px solid var(--line)}
 .logo{font-size:28px;font-weight:900;letter-spacing:-1px}.date{color:var(--muted);font-size:14px}
 main{max-width:1150px;margin:28px auto;padding:0 20px}.hero{display:flex;justify-content:space-between;gap:20px;align-items:end;margin-bottom:22px}
 .actions{display:flex;gap:10px}h1{font-size:38px;letter-spacing:-1.5px;margin:0 0 6px}.sub{color:var(--muted)}
-button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-radius:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-radius:12px;font-weight:700;cursor:pointer}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}.label{color:var(--muted);font-size:13px}.value{font-size:30px;font-weight:850;margin-top:7px}.green{color:#16803c}
 .section{margin-top:18px;display:grid;grid-template-columns:1.4fr .9fr;gap:18px}.title{font-size:19px;font-weight:800;margin-bottom:15px}
 .bars{display:flex;align-items:end;gap:12px;height:220px;padding:10px 0 0}.barwrap{flex:1;height:100%;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:7px}.bar{width:100%;max-width:55px;border-radius:9px 9px 4px 4px;background:#111}.barwrap small{color:var(--muted)}
 .tip{padding:15px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px}.tip strong{display:block;margin-bottom:5px}.tip span{color:var(--muted);font-size:14px}
-.tables{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.table{border:1px solid var(--line);border-radius:14px;padding:15px;text-align:center;position:relative;background:var(--card)}
-.delete-btn{position:absolute;top:8px;right:8px;background:none;color:var(--muted);padding:4px;border-radius:50%;font-size:12px;cursor:pointer;font-weight:normal}
-.delete-btn:hover{color:var(--danger)}
-.dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;background:#22a559}.busy .dot{background:#e5a100}.empty .dot{background:#bbb}
-.modal{display:none;position:fixed;inset:0;background:#0007;place-items:center;padding:20px;z-index:100}.modalbox{background:#fff;padding:25px;border-radius:18px;width:min(430px,100%)}input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;margin:7px 0 14px} 
+.tables{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.table{border:1px solid var(--line);border-radius:14px;padding:15px;text-align:center}.dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;background:#22a559}.busy .dot{background:#e5a100}.empty .dot{background:#bbb}
+.modal{display:none;position:fixed;inset:0;background:#0007;place-items:center;padding:20px}.modalbox{background:#fff;padding:25px;border-radius:18px;width:min(430px,100%)}input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;margin:7px 0 14px} 
 @media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.section{grid-template-columns:1fr}.tables{grid-template-columns:repeat(2,1fr)}.hero{align-items:start;flex-direction:column}h1{font-size:31px}}
 </style>
 </head>
@@ -31,7 +27,6 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 <section class="hero">
 <div><h1>Goedenavond 👋</h1><div class="sub">Hier is wat er vandaag in je restaurant gebeurt.</div></div>
 <div class="actions">
-  <button onclick="resetReservations()" style="background:#8e8e93">🧹 Reset</button>
   <button onclick="openTableModal()" style="background:#007aff">🪑 ＋ Tafel</button>
   <button onclick="openModal()">＋ Reservering</button>
 </div>
@@ -41,12 +36,16 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 <div class="card"><div class="label">Bezetting vanavond</div><div class="value" id="occupancy">1%</div></div>
 <div class="card"><div class="label">Reserveringen</div><div class="value" id="bookings">1</div></div>
 <div class="card"><div class="label">Beschikbare stoelen</div><div class="value" id="seats">1</div></div>
-<div class="card"><div class="label">TABLE-score</div><div class="value green" id="score">1/100</div></div>
+<div class="card"><div class="label">TABLE-score</div><div class="value green">1/100</div></div>
 </section>
 
 <section class="section">
 <div class="card"><div class="title">Verwachte bezetting</div><div class="bars" id="bars"></div></div>
-<div class="card"><div class="title">TABLE adviseert</div><div id="advice-box"></div></div>
+<div class="card"><div class="title">TABLE adviseert</div>
+<div class="tip"><strong>🟢 Vul 20:30–21:00</strong><span>Je hebt daar nog 8 stoelen vrij. Dit is vanavond je grootste kans.</span></div>
+<div class="tip"><strong>🪑 Tafel 7 vrijhouden</strong><span>Er komt rond 19:45 een reservering voor 4 personen.</span></div>
+<div class="tip"><strong>📈 Bezetting stijgt</strong><span>Vrijdag is gemiddeld 11% drukker dan donderdag.</span></div>
+</div>
 </section>
 
 <section class="card" style="margin-top:18px"><div class="title">Tafeloverzicht</div><div class="tables" id="tables"></div></section>
@@ -70,127 +69,38 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 </div></div>
 
 <script>
-// We starten stabiel op met 1 actieve basistafel om browsercrashes te voorkomen
-const state = {
-  bookings: 1,
-  tables: [
-    ['Tafel 1', 'Vrij', 1]
-  ]
-};
+const state={bookings:1, tables:[
+['Tafel 1','Vrij']
+]};
+document.getElementById('today').textContent=new Intl.DateTimeFormat('nl-NL',{weekday:'long',day:'numeric',month:'long'}).format(new Date());
+function render(){
+document.getElementById('bookings').textContent=state.bookings;
+document.getElementById('tables').innerHTML=state.tables.map(([n,s])=>{
+let c=s==='Bezet'?'busy':s==='Vrij'?'empty':'';
+return `<div class="table ${c}"><div><span class="dot"></span>${s}</div><strong>${n}</strong></div>`}).join('');
+const vals=[42,55,72,90,100,94,78,58];
+document.getElementById('bars').innerHTML=vals.map((v,i)=>`<div class="barwrap"><div class="bar" style="height:${v*1.75}px" title="${v}%"></div><small>${17+i}:00</small></div>`).join('');
+}
+function openModal(){document.getElementById('modal').style.display='grid'}
+function closeModal(){document.getElementById('modal').style.display='none'}
+function openTableModal(){document.getElementById('tableModal').style.display='grid'}
+function closeTableModal(){document.getElementById('tableModal').style.display='none'}
 
-document.getElementById('today').textContent = new Intl.DateTimeFormat('nl-NL', {weekday: 'long', day: 'numeric', month: 'long'}).format(new Date());
-
-function render() {
-  document.getElementById('bookings').textContent = state.bookings;
-
-  let totaalStoelen = 0;
-  let bezetteTafels = 0;
-
-  state.tables.forEach(([name, status, seats]) => {
-    totaalStoelen += seats;
-    if (status === 'Bezet' || status === 'Gereserveerd') {
-      bezetteTafels++;
-    }
-  });
-
-  document.getElementById('seats').textContent = totaalStoelen;
-
-  let percentage = Math.round((bezetteTafels / state.tables.length) * 100);
-  document.getElementById('occupancy').textContent = bezetteTafels > 0 ? percentage + "%" : "1%";
-
-  let score = Math.round(100 - (percentage / 2));
-  document.getElementById('score').textContent = bezetteTafels > 0 ? score + "/100" : "1/100";
-
-  // Teken de tafels op het scherm inclusief de verwijder-knop (X)
-  document.getElementById('tables').innerHTML = state.tables.map((tableArr, index) => {
-    const n = tableArr[0];
-    const s = tableArr[1];
-    const seats = tableArr[2];
-    let c = s === 'Bezet' ? 'busy' : s === 'Vrij' ? 'empty' : 'busy';
-    return `<div class="table ${c}">
-              <span class="delete-btn" onclick="deleteTable(${index})">✕</span>
-              <div><span class="dot"></span>${s}</div>
-              <strong>${n}</strong><br>
-              <small style="color:var(--muted)">${seats} stoelen</small>
-            </div>`;
-  }).join('');
-
-  // Update de dynamische adviestips rechts in het scherm
-  updateAdvice(state.tables.length, bezetteTafels);
-
-  // DE BEKENDE REPARATIE: De cijfers voor de balkengrafiek staan er nu rotsvast in!
-  const vals =;
-  document.getElementById('bars').innerHTML = vals.map((v, i) => `<div class="barwrap"><div class="bar" style="height:${v * 1.75}px" title="${v}%"></div><small>${17 + i}:00</small></div>`).join('');
+function addTable(){
+const tableName=document.getElementById('tableName').value.trim();
+if(!tableName){alert('Vul een tafelnaam in.');return}
+state.tables.push([tableName,'Vrij']);
+closeTableModal();document.getElementById('tableName').value='';render();
 }
 
-function updateAdvice(totalTables, busyTables) {
-  const box = document.getElementById('advice-box');
-  if (totalTables <= 1) {
-    box.innerHTML = `<div class="tip"><strong>🪑 Voeg meer tafels toe</strong><span>Je restaurant heeft nu 1 actieve tafel op het dashboard staan.</span></div>
-                     <div class="tip"><strong>📈 Systeem stand-by</strong><span>Zodra er data bijkomt, berekent TABLE live slimme bezettingstips.</span></div>`;
-  } else {
-    let vrijeTafels = totalTables - busyTables;
-    box.innerHTML = `<div class="tip"><strong>🟢 Tafeloverzicht actief</strong><span>Je beheert nu ${totalTables} tafels via je iPad.</span></div>
-                     <div class="tip"><strong>🪑 Beschikbaarheid</strong><span>Er zijn momenteel ${vrijeTafels} tafels klaar voor inloop.</span></div>`;
-  }
+function addBooking(){
+const name=document.getElementById('name').value.trim();
+if(!name){alert('Vul een naam in.');return}
+state.bookings++;
+const free=state.tables.findIndex(x=>x[1]==='Vrij');
+if(free>=0)state.tables[free][1]='Gereserveerd';
+closeModal();render();
 }
-
-function deleteTable(index) {
-  if (state.tables.length <= 1) {
-    alert("Je moet minimaal 1 tafel overhouden om het systeem stabiel te houden!");
-    return;
-  }
-  state.tables.splice(index, 1);
-  render();
-}
-
-function resetReservations() {
-  state.bookings = 1;
-  state.tables.forEach(t => t[1] = 'Vrij');
-  render();
-}
-
-function openModal() { document.getElementById('modal').style.display = 'grid' }
-function closeModal() { document.getElementById('modal').style.display = 'none' }
-function openTableModal() { document.getElementById('tableModal').style.display = 'grid' }
-function closeTableModal() { document.getElementById('tableModal').style.display = 'none' }
-
-function addTable() {
-  const tableName = document.getElementById('tableName').value.trim();
-  const tableSeats = parseInt(document.getElementById('tableSeats').value);
-  if (!tableName) {
-    alert('Vul een tafelnaam in.');
-    return;
-  }
-  
-  state.tables.push([tableName, 'Vrij', tableSeats]);
-  closeTableModal();
-  document.getElementById('tableName').value = '';
-  render();
-}
-
-function addBooking() {
-  const name = document.getElementById('name').value.trim();
-  if (!name) {
-    alert('Vul een naam in.');
-    return;
-  }
-  
-  const freeIndex = state.tables.findIndex(x => x[1] === 'Vrij');
-  if (freeIndex >= 0) {
-    state.tables[freeIndex][1] = 'Gereserveerd';
-    state.bookings++;
-  } else {
-    alert('Geen vrije tafels beschikbaar! Voeg eerst een extra tafel toe.');
-  }
-  
-  closeModal();
-  document.getElementById('name').value = '';
-  render();
-}
-
-// Start direct op zonder fouten
 render();
 </script>
-</body>
-</html>
+</body></html>
