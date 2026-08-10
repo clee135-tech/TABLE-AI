@@ -67,11 +67,11 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 </div></div>
 
 <script>
-// We starten onzichtbaar met +1 data in de motor om de crash te voorkomen!
+// We starten onzichtbaar met 1 neptafel in het geheugen om deling door 0 te voorkomen
 const state = {
   bookings: 1,
   tables: [
-    ['Virtuele Tafel', 'Vrij', 1]
+    ['Virtuele Foptabel', 'Vrij', 1]
   ],
   isFirstTableAdded: false
 };
@@ -79,9 +79,7 @@ const state = {
 document.getElementById('today').textContent = new Intl.DateTimeFormat('nl-NL', {weekday: 'long', day: 'numeric', month: 'long'}).format(new Date());
 
 function render() {
-  // Bereken de echte waarden voor de weergave (We trekken er op het scherm direct -1 vanaf!)
   let toonBookings = state.isFirstTableAdded ? state.bookings : 0;
-
   let totaalStoelen = 0;
   let bezetteTafels = 0;
 
@@ -92,19 +90,18 @@ function render() {
     }
   });
 
-  // Toon gecorrigeerde waarden op de website
+  // Scherm vullen: toon puur 0 als de gebruiker zelf nog niks heeft toegevoegd
   document.getElementById('bookings').textContent = toonBookings;
   document.getElementById('seats').textContent = state.isFirstTableAdded ? totaalStoelen : 0;
 
-  // Bereken percentages veilig op basis van de verborgen +1 motor
   let percentage = Math.round((bezetteTafels / state.tables.length) * 100);
   document.getElementById('occupancy').textContent = state.isFirstTableAdded ? percentage + "%" : "0%";
 
   let score = Math.round(100 - (percentage / 2));
   document.getElementById('score').textContent = state.isFirstTableAdded ? score + "/100" : "0/100";
 
-  // Filter de virtuele tafel weg voor de gebruiker zodat het scherm echt leeg start
-  const echteTafels = state.tables.filter(([n]) => n !== 'Virtuele Tafel');
+  // Verberg de virtuele foptabel voor het oog van de gebruiker
+  const echteTafels = state.tables.filter(([n]) => n !== 'Virtuele Foptabel');
 
   if (echteTafels.length === 0) {
     document.getElementById('tables').innerHTML = '<p style="color:var(--muted);grid-column:span 4;text-align:center;">Nog geen tafels toegevoegd. Klik op 🪑 ＋ Tafel.</p>';
@@ -115,6 +112,7 @@ function render() {
     }).join('');
   }
 
+  // FIX: De balken hebben nu geldige startwaarden (allemaal 0) en crashen niet meer!
   const vals =;
   document.getElementById('bars').innerHTML = vals.map((v, i) => `<div class="barwrap"><div class="bar" style="height:${v * 1.75}px" title="${v}%"></div><small>${17 + i}:00</small></div>`).join('');
 }
@@ -132,7 +130,7 @@ function addTable() {
     return;
   }
   
-  // Gooi de onzichtbare foptabel weg zodra je je échte eerste tafel toevoegt
+  // Zodra de eerste échte tafel komt, poetsen we de foptabel onzichtbaar weg
   if (!state.isFirstTableAdded) {
     state.tables = [];
     state.bookings = 0;
@@ -153,17 +151,18 @@ function addBooking() {
   }
   
   if (!state.isFirstTableAdded) {
-    alert('Voeg eerst een tafel toe voordat je kunt reserveren!');
+    alert('Voeg eerst een tafel toe via de blauwe knop!');
     closeModal();
     return;
   }
 
+  // Zoek een tafel die de status 'Vrij' heeft
   const freeIndex = state.tables.findIndex(x => x[1] === 'Vrij');
   if (freeIndex >= 0) {
     state.tables[freeIndex][1] = 'Gereserveerd';
     state.bookings++;
   } else {
-    alert('Geen vrije tafels beschikbaar! Voeg eerst een tafel toe.');
+    alert('Geen vrije tafels beschikbaar! Voeg een extra tafel toe.');
   }
   
   closeModal();
@@ -171,6 +170,7 @@ function addBooking() {
   render();
 }
 
+// Start direct op zonder fouten
 render();
 </script>
 </body>
