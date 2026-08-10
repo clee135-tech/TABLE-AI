@@ -111,8 +111,8 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
     const bezettingsPercentage = totaalStoelen > 0 ? Math.round((bezetteStoelen / totaalStoelen) * 100) : 0;
     document.getElementById('occupancy').textContent = bezettingsPercentage + "%";
 
-    // Herstelde balkengrafiek data array
-    const vals = [20, 40, 60, 80, 100, 70, 50, 30];
+    // HIER STAAT DE REPARATIE: De getallen voor de balken zijn hersteld!
+    const vals = [42, 55, 72, 90, 100, 94, 78, 58];
     document.getElementById('bars').innerHTML = vals.map((v, i) => `<div class="barwrap"><div class="bar" style="height:${v * 1.75}px" title="${v}%"></div><small>${17 + i}:00</small></div>`).join('');
   }
 
@@ -193,7 +193,3 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
   }
 
   // Start direct op
-  loadLiveDashboard();
-</script>
-</body>
-</html>
