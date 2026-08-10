@@ -33,18 +33,16 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 </section>
 
 <section class="grid">
-<div class="card"><div class="label">Bezetting vanavond</div><div class="value" id="occupancy">1%</div></div>
-<div class="card"><div class="label">Reserveringen</div><div class="value" id="bookings">1</div></div>
-<div class="card"><div class="label">Beschikbare stoelen</div><div class="value" id="seats">1</div></div>
-<div class="card"><div class="label">TABLE-score</div><div class="value green">1/100</div></div>
+<div class="card"><div class="label">Bezetting vanavond</div><div class="value" id="occupancy">0%</div></div>
+<div class="card"><div class="label">Reserveringen</div><div class="value" id="bookings">0</div></div>
+<div class="card"><div class="label">Beschikbare stoelen</div><div class="value" id="seats">0</div></div>
+<div class="card"><div class="label">TABLE-score</div><div class="value green" id="score">0/100</div></div>
 </section>
 
 <section class="section">
 <div class="card"><div class="title">Verwachte bezetting</div><div class="bars" id="bars"></div></div>
 <div class="card"><div class="title">TABLE adviseert</div>
-<div class="tip"><strong>🟢 Vul 20:30–21:00</strong><span>Je hebt daar nog 8 stoelen vrij. Dit is vanavond je grootste kans.</span></div>
-<div class="tip"><strong>🪑 Tafel 7 vrijhouden</strong><span>Er komt rond 19:45 een reservering voor 4 personen.</span></div>
-<div class="tip"><strong>📈 Bezetting stijgt</strong><span>Vrijdag is gemiddeld 11% drukker dan donderdag.</span></div>
+<div class="tip"><strong>🟢 Systeem Klaar</strong><span>Voeg je eerste tafels en reserveringen toe via de knoppen!</span></div>
 </div>
 </section>
 
@@ -62,47 +60,104 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 
 <!-- MODAL: NIEUWE TAFEL -->
 <div class="modal" id="tableModal"><div class="modalbox"><h2>Nieuwe tafel toevoegen</h2>
-<label>Tafel Naam</label><input id="tableName" placeholder="Bijv. Tafel 5">
+<label>Tafel Naam</label><input id="tableName" placeholder="Bijv. Tafel 1">
 <label>Aantal stoelen</label><select id="tableSeats"><option>2</option><option>4</option><option>6</option><option>8</option></select>
 <button onclick="addTable()">Tafel Toevoegen</button>
 <button onclick="closeTableModal()" style="background:#eee;color:#111;margin-left:6px">Annuleren</button>
 </div></div>
 
 <script>
-const state={bookings:1, tables:[
-['Tafel 1','Bezet'],['Tafel 2','Bezet'],['Tafel 3','Vrij'],['Tafel 4','Bezet'],
-['Tafel 5','Vrij'],['Tafel 6','Bezet'],['Tafel 7','Gereserveerd'],['Tafel 8','Vrij']
-]};
-document.getElementById('today').textContent=new Intl.DateTimeFormat('nl-NL',{weekday:'long',day:'numeric',month:'long'}).format(new Date());
-function render(){
-document.getElementById('bookings').textContent=state.bookings;
-document.getElementById('tables').innerHTML=state.tables.map(([n,s])=>{
-let c=s==='Bezet'?'busy':s==='Vrij'?'empty':'';
-return `<div class="table ${c}"><div><span class="dot"></span>${s}</div><strong>${n}</strong></div>`}).join('');
-const vals=[42,55,72,90,100,94,78,58];
-document.getElementById('bars').innerHTML=vals.map((v,i)=>`<div class="barwrap"><div class="bar" style="height:${v*1.75}px" title="${v}%"></div><small>${17+i}:00</small></div>`).join('');
-}
-function openModal(){document.getElementById('modal').style.display='grid'}
-function closeModal(){document.getElementById('modal').style.display='none'}
-function openTableModal(){document.getElementById('tableModal').style.display='grid'}
-function closeTableModal(){document.getElementById('tableModal').style.display='none'}
+// We beginnen met 0 reserveringen en een lege tafellijst []
+const state = {
+  bookings: 0,
+  tables: []
+};
 
-function addTable(){
-const tableName=document.getElementById('tableName').value.trim();
-const tableSeats=document.getElementById('tableSeats').value;
-if(!tableName){alert('Vul een tafelnaam in.');return}
-state.tables.push([tableName,'Vrij']);
-closeTableModal();document.getElementById('tableName').value='';render();
+document.getElementById('today').textContent = new Intl.DateTimeFormat('nl-NL', {weekday: 'long', day: 'numeric', month: 'long'}).format(new Date());
+
+function render() {
+  // Update aantal reserveringen
+  document.getElementById('bookings').textContent = state.bookings;
+
+  // Tel het totale aantal stoelen en bereken bezetting
+  let totaalStoelen = 0;
+  let bezetteTafels = 0;
+
+  state.tables.forEach(([name, status, seats]) => {
+    totaalStoelen += seats;
+    if (status === 'Bezet' || status === 'Gereserveerd') {
+      bezetteTafels++;
+    }
+  });
+
+  // Toon beschikbare stoelen (simpele weergave op basis van invoer)
+  document.getElementById('seats').textContent = totaalStoelen;
+
+  // Bereken bezettingspercentage
+  let percentage = state.tables.length > 0 ? Math.round((bezetteTafels / state.tables.length) * 100) : 0;
+  document.getElementById('occupancy').textContent = percentage + "%";
+
+  // Bereken een dynamische TABLE-score
+  let score = state.tables.length > 0 ? Math.round(100 - (percentage / 2)) : 0;
+  document.getElementById('score').textContent = score + "/100";
+
+  // Teken de tafels op het scherm
+  if (state.tables.length === 0) {
+    document.getElementById('tables').innerHTML = '<p style="color:var(--muted);grid-column:span 4;text-align:center;">Nog geen tafels toegevoegd. Klik op 🪑 ＋ Tafel.</p>';
+  } else {
+    document.getElementById('tables').innerHTML = state.tables.map(([n, s, seats]) => {
+      let c = s === 'Bezet' ? 'busy' : s === 'Vrij' ? 'empty' : 'busy';
+      return `<div class="table ${c}"><div><span class="dot"></span>${s}</div><strong>${n}</strong><br><small style="color:var(--muted)">${seats} stoelen</small></div>`;
+    }).join('');
+  }
+
+  // Balkengrafiek onderin
+  const vals =;
+  document.getElementById('bars').innerHTML = vals.map((v, i) => `<div class="barwrap"><div class="bar" style="height:${v * 1.75}px" title="${v}%"></div><small>${17 + i}:00</small></div>`).join('');
 }
 
-function addBooking(){
-const name=document.getElementById('name').value.trim();
-if(!name){alert('Vul een naam in.');return}
-state.bookings++;
-const free=state.tables.findIndex(x=>x[1]==='Vrij');
-if(free>=0)state.tables[free][1]='Gereserveerd';
-closeModal();render();
+function openModal() { document.getElementById('modal').style.display = 'grid' }
+function closeModal() { document.getElementById('modal').style.display = 'none' }
+function openTableModal() { document.getElementById('tableModal').style.display = 'grid' }
+function closeTableModal() { document.getElementById('tableModal').style.display = 'none' }
+
+function addTable() {
+  const tableName = document.getElementById('tableName').value.trim();
+  const tableSeats = parseInt(document.getElementById('tableSeats').value);
+  if (!tableName) {
+    alert('Vul een tafelnaam in.');
+    return;
+  }
+  // Sla naam, status en stoelen op
+  state.tables.push([tableName, 'Vrij', tableSeats]);
+  closeTableModal();
+  document.getElementById('tableName').value = '';
+  render();
 }
+
+function addBooking() {
+  const name = document.getElementById('name').value.trim();
+  if (!name) {
+    alert('Vul een naam in.');
+    return;
+  }
+  
+  // Zoek een vrije tafel
+  const freeIndex = state.tables.findIndex(x => x[1] === 'Vrij');
+  if (freeIndex >= 0) {
+    state.tables[freeIndex][1] = 'Gereserveerd';
+    state.bookings++;
+  } else {
+    alert('Geen vrije tafels beschikbaar!');
+  }
+  
+  closeModal();
+  document.getElementById('name').value = '';
+  render();
+}
+
+// Eerste keer tekenen op het scherm
 render();
 </script>
-</body></html>
+</body>
+</html>
