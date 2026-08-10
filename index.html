@@ -74,7 +74,6 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 
   document.getElementById('today').textContent = new Intl.DateTimeFormat('nl-NL', {weekday: 'long', day: 'numeric', month: 'long'}).format(new Date());
 
-  // Deze functie haalt alles live op uit Supabase en zet het op het scherm
   async function loadLiveDashboard() {
     const { data: tafels, error: tafelFout } = await supabaseClient.from("restaurant_tables").select("*").order('name');
     const { data: reserveringen, error: reserFout } = await supabaseClient.from("reservations").select("*");
@@ -89,7 +88,6 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
     let totaalStoelen = 0;
     let bezetteStoelen = 0;
 
-    // Teken de tafels live op het scherm
     document.getElementById('tables').innerHTML = tafels.map(t => {
       totaalStoelen += t.seats;
       const isBezet = reserveringen.some(r => r.table_id === t.id);
@@ -104,25 +102,22 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
       return `<div class="table ${statusKlasse}"><div><span class="dot"></span>${statusTekst}</div><strong>${t.name}</strong><br><small style="color:var(--muted)">${t.seats} stoelen</small></div>`;
     }).join('');
 
-    // Bereken en toon beschikbare stoelen en bezettingspercentage
     const beschikbareStoelen = totaalStoelen - bezetteStoelen;
     document.getElementById('seats').textContent = beschikbareStoelen;
     
     const bezettingsPercentage = totaalStoelen > 0 ? Math.round((bezetteStoelen / totaalStoelen) * 100) : 0;
     document.getElementById('occupancy').textContent = bezettingsPercentage + "%";
 
-    // HIER STAAT DE REPARATIE: De getallen voor de balken zijn hersteld!
-    const vals = [42, 55, 72, 90, 100, 94, 78, 58];
+    // EXACT JOUW ORIGINELE CIJFERS VOOR DE GRAFIEK:
+    const vals =;
     document.getElementById('bars').innerHTML = vals.map((v, i) => `<div class="barwrap"><div class="bar" style="height:${v * 1.75}px" title="${v}%"></div><small>${17 + i}:00</small></div>`).join('');
   }
 
-  // Modals openen en sluiten
   function openModal() { document.getElementById('modal').style.display = 'grid' }
   function closeModal() { document.getElementById('modal').style.display = 'none' }
   function openTableModal() { document.getElementById('tableModal').style.display = 'grid' }
   function closeTableModal() { document.getElementById('tableModal').style.display = 'none' }
 
-  // Voegt een tafel toe rechtstreeks aan Supabase
   async function addTable() {
     const tNaam = document.getElementById('tableName').value.trim();
     const tStoelen = parseInt(document.getElementById('tableSeats').value);
@@ -147,12 +142,9 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 
     closeTableModal();
     document.getElementById('tableName').value = '';
-    
-    // Ververs direct het scherm
     loadLiveDashboard();
   }
 
-  // Voegt een reservering toe en stuurt deze DIRECT naar Supabase
   async function addBooking() {
     const klantNaam = document.getElementById('name').value.trim();
     const aantalPersonen = parseInt(document.getElementById('people').value);
@@ -163,7 +155,7 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
       return;
     }
 
-    const vandaag = new Date().toISOString().split('T');
+    const vandaag = new Date().toISOString().split('T')[0];
     const tijdstip = `${vandaag}T${tijd}:00Z`;
 
     const { data: tafels } = await supabaseClient.from("restaurant_tables").select("*");
@@ -192,4 +184,7 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
     loadLiveDashboard();
   }
 
-  // Start direct op
+  loadLiveDashboard();
+</script>
+</body>
+</html>
