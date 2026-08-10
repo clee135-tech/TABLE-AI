@@ -111,8 +111,8 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
     const bezettingsPercentage = totaalStoelen > 0 ? Math.round((bezetteStoelen / totaalStoelen) * 100) : 0;
     document.getElementById('occupancy').textContent = bezettingsPercentage + "%";
 
-    // Vaste balken grafiek voor de uren
-    const vals =;
+    // Herstelde balkengrafiek data array
+    const vals = [20, 40, 60, 80, 100, 70, 50, 30];
     document.getElementById('bars').innerHTML = vals.map((v, i) => `<div class="barwrap"><div class="bar" style="height:${v * 1.75}px" title="${v}%"></div><small>${17 + i}:00</small></div>`).join('');
   }
 
@@ -120,10 +120,9 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
   function openModal() { document.getElementById('modal').style.display = 'grid' }
   function closeModal() { document.getElementById('modal').style.display = 'none' }
   function openTableModal() { document.getElementById('tableModal').style.display = 'grid' }
-  function closeModalTableModal() { document.getElementById('tableModal').style.display = 'none' }
   function closeTableModal() { document.getElementById('tableModal').style.display = 'none' }
 
-  // NIEUWE FUNCTIE: Voegt een tafel toe rechtstreeks aan Supabase
+  // Voegt een tafel toe rechtstreeks aan Supabase
   async function addTable() {
     const tNaam = document.getElementById('tableName').value.trim();
     const tStoelen = parseInt(document.getElementById('tableSeats').value);
@@ -149,7 +148,7 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
     closeTableModal();
     document.getElementById('tableName').value = '';
     
-    // Ververs het dashboard direct zodat de nieuwe tafel er staat!
+    // Ververs direct het scherm
     loadLiveDashboard();
   }
 
@@ -164,7 +163,7 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
       return;
     }
 
-    const vandaag = new Date().toISOString().split('T')[0];
+    const vandaag = new Date().toISOString().split('T');
     const tijdstip = `${vandaag}T${tijd}:00Z`;
 
     const { data: tafels } = await supabaseClient.from("restaurant_tables").select("*");
@@ -189,3 +188,12 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
     }
 
     closeModal();
+    document.getElementById('name').value = '';
+    loadLiveDashboard();
+  }
+
+  // Start direct op
+  loadLiveDashboard();
+</script>
+</body>
+</html>
