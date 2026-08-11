@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TABLE — Restaurant Dashboard</title>
 <style>
-:root{--bg:#f5f5f7;--card:#fff;--text:#161616;--muted:#6b6b73;--line:#e8e8ec;--accent:#111;--primary:#007aff;--primary-hover:#0066cc}
+:root{--bg:#f5f5f7;--card:#fff;--text:#161616;--muted:#6b6b73;--line:#e8e8ec;--accent:#111;--primary:#007aff;--primary-hover:#0066cc;--danger:#df2c2c}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
 header{padding:28px max(20px,calc((100% - 1150px)/2));display:flex;justify-content:space-between;align-items:center;background:#fff;border-bottom:1px solid var(--line)}
 .logo{font-size:28px;font-weight:900;letter-spacing:-1px}.date{color:var(--muted);font-size:14px}
@@ -17,12 +17,15 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 20px;border-rad
 button:active{transform:scale(0.97)}
 .btn-secondary{background:#f2f2f7;color:var(--accent);border:1px solid var(--line)}
 .btn-secondary:hover{background:#e5e5ea}
+.btn-danger{background:#ff3b30;color:#fff}
+.btn-danger:hover{background:#d32f2f}
 
 /* DE DRIE KEER GROTERE CENTRALE KNOP */
 .center-container {
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 15px;
   margin: 30px 0;
   padding: 20px;
   background: var(--card);
@@ -46,9 +49,15 @@ button:active{transform:scale(0.97)}
 .section{margin-top:18px;display:grid;grid-template-columns:1.4fr .9fr;gap:18px}.title{font-size:19px;font-weight:800;margin-bottom:15px}
 .bars{display:flex;align-items:end;gap:12px;height:220px;padding:10px 0 0}.barwrap{flex:1;height:100%;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:7px}.bar{width:100%;max-width:55px;border-radius:9px 9px 4px 4px;background:#111}.barwrap small{color:var(--muted)}
 .tip{padding:15px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px}.tip strong{display:block;margin-bottom:5px}.tip span{color:var(--muted);font-size:14px}
-.tables{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.table{border:1px solid var(--line);border-radius:14px;padding:15px;text-align:center;background:var(--card)}.dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;background:#22a559}.busy .dot{background:#e5a100}.empty .dot{background:#bbb}
 
-/* 📥 STANDAARD SNELLE POP-UP STYLING ZONDER ANIMATIES */
+/* TAFEL INDELING MET VERWIJDERKNOP */
+.tables{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.table{border:1px solid var(--line);border-radius:14px;padding:18px 15px;text-align:center;background:var(--card);position:relative}
+.delete-table-btn{position:absolute;top:6px;right:8px;background:none;color:var(--muted);border:0;padding:2px;font-size:12px;cursor:pointer;font-weight:bold}
+.delete-table-btn:hover{color:var(--danger)}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;background:#22a559}.busy .dot{background:#e5a100}.empty .dot{background:#bbb}
+
+/* POP-UP STYLING */
 .modal{
   display:none;
   position:fixed;
@@ -69,7 +78,7 @@ button:active{transform:scale(0.97)}
 input,select{width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;margin:8px 0 18px;font-size:15px;background:#f9f9fb;transition:all 0.2s ease;color:var(--text)}
 input:focus,select:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 4px rgba(0,122,255,0.1)}
 
-@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.section{grid-template-columns:1fr}.tables{grid-template-columns:repeat(2,1fr)}.hero{align-items:start;flex-direction:column}h1{font-size:31px}.btn-mega-primary{padding:24px 40px;font-size:28px}}
+@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.section{grid-template-columns:1fr}.tables{grid-template-columns:repeat(2,1fr)}.hero{align-items:start;flex-direction:column}h1{font-size:31px}.btn-mega-primary{padding:24px 40px;font-size:28px}.center-container{flex-direction:column}}
 </style>
 </head>
 <body>
@@ -82,8 +91,10 @@ input:focus,select:focus{outline:none;border-color:var(--primary);background:#ff
 </div>
 </section>
 
+<!-- DE CENTRALE RESERVERINGSKNOP + DE RESERVERINGS RESETKNOP -->
 <div class="center-container">
   <button class="btn-mega-primary" onclick="openModal()">＋ Reservering</button>
+  <button class="btn-secondary btn-danger" onclick="clearAllBookings()" style="padding: 15px; border-radius: 16px;">🧹 Reset Boekingen</button>
 </div>
 
 <section class="grid">
@@ -116,9 +127,16 @@ input:focus,select:focus{outline:none;border-color:var(--primary);background:#ff
 </div>
 </div></div>
 
-<!-- MODAL: NIEUWE TAFEL -->
+<!-- MODAL: NIEUWE TAFEL (NU INCLUSIEF STOELEN SELECTIE) -->
 <div class="modal" id="tableModal"><div class="modalbox"><h2>Nieuwe tafel toevoegen</h2>
 <label style="font-weight:600;font-size:14px;">Tafel Naam</label><input id="tableName" placeholder="Bijv. Tafel 2">
+<label style="font-weight:600;font-size:14px;">Aantal stoelen</label>
+<select id="tableSeats">
+  <option value="2">2 stoelen</option>
+  <option value="4">4 stoelen</option>
+  <option value="6">6 stoelen</option>
+  <option value="8">8 stoelen</option>
+</select>
 <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
   <button class="btn-secondary" onclick="closeTableModal()" style="padding:12px 18px;">Annuleren</button>
   <button style="background:var(--primary);color:#fff;padding:12px 24px;border-radius:12px;font-weight:700;" onclick="addTable()">Tafel Opslaan</button>
@@ -126,47 +144,46 @@ input:focus,select:focus{outline:none;border-color:var(--primary);background:#ff
 </div></div>
 
 <script>
+// We starten met Tafel 1, die standaard op Vrij staat met 4 stoelen
 const state={bookings:1, tables:[
-['Tafel 1','Vrij']
+  ['Tafel 1', 'Vrij', 4]
 ]};
+
 document.getElementById('today').textContent=new Intl.DateTimeFormat('nl-NL',{weekday:'long',day:'numeric',month:'long'}).format(new Date());
+
 function render(){
 document.getElementById('bookings').textContent=state.bookings;
-document.getElementById('tables').innerHTML=state.tables.map(([n,s])=>{
-let c=s==='Bezet'?'busy':s==='Vrij'?'empty':'';
-return `<div class="table ${c}"><div><span class="dot"></span>${s}</div><strong>${n}</strong></div>`}).join('');
-const vals=[42,55,72,90,100,94,78,58];
+
+// Loop door de tafels en teken ze live met hun naam, stoelen en de X-knop
+document.getElementById('tables').innerHTML=state.tables.map(([n,s,seats], index)=>{
+  let c=s==='Bezet'?'busy':s==='Vrij'?'empty':s==='Gereserveerd'?'busy':'';
+  return `<div class="table ${c}">
+            <button class="delete-table-btn" onclick="removeTable(${index})">✕</button>
+            <div><span class="dot"></span>${s}</div>
+            <strong>${n}</strong><br>
+            <small style="color:var(--muted); font-size: 12px;">${seats || 4} stoelen</small>
+          </div>`
+}).join('');
+
+const vals=;
 document.getElementById('bars').innerHTML=vals.map((v,i)=>`<div class="barwrap"><div class="bar" style="height:${v*1.75}px" title="${v}%"></div><small>${17+i}:00</small></div>`).join('');
 }
 
-function openModal(){
-  document.getElementById('modal').style.display = 'grid';
-}
-function closeModal(){
-  document.getElementById('modal').style.display = 'none';
-}
-function openTableModal(){
-  document.getElementById('tableModal').style.display = 'grid';
-}
-function closeTableModal(){
-  document.getElementById('tableModal').style.display = 'none';
-}
+function openModal(){ document.getElementById('modal').style.display = 'grid'; }
+function closeModal(){ document.getElementById('modal').style.display = 'none'; }
+function openTableModal(){ document.getElementById('tableModal').style.display = 'grid'; }
+function closeTableModal(){ document.getElementById('tableModal').style.display = 'none'; }
 
+// Voegt een tafel toe mét het gekozen aantal stoelen uit het menu
 function addTable(){
 const tableName=document.getElementById('tableName').value.trim();
+const tableSeats=parseInt(document.getElementById('tableSeats').value);
 if(!tableName){alert('Vul een tafelnaam in.');return}
-state.tables.push([tableName,'Vrij']);
-closeTableModal();document.getElementById('tableName').value='';render();
+
+state.tables.push([tableName, 'Vrij', tableSeats]);
+closeTableModal();
+document.getElementById('tableName').value='';
+render();
 }
 
 function addBooking(){
-const name=document.getElementById('name').value.trim();
-if(!name){alert('Vul een naam in.');return}
-state.bookings++;
-const free=state.tables.findIndex(x=>x[1]==='Vrij');
-if(free>=0)state.tables[free][1]='Gereserveerd';
-closeModal();render();
-}
-render();
-</script>
-</body></html>
