@@ -5,19 +5,34 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TABLE — Restaurant Dashboard</title>
 <style>
-:root{--bg:#f5f5f7;--card:#fff;--text:#161616;--muted:#6b6b73;--line:#e8e8ec;--accent:#111}
+:root{--bg:#f5f5f7;--card:#fff;--text:#161616;--muted:#6b6b73;--line:#e8e8ec;--accent:#111;--primary:#007aff;--primary-hover:#0066cc}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
 header{padding:28px max(20px,calc((100% - 1150px)/2));display:flex;justify-content:space-between;align-items:center;background:#fff;border-bottom:1px solid var(--line)}
 .logo{font-size:28px;font-weight:900;letter-spacing:-1px}.date{color:var(--muted);font-size:14px}
 main{max-width:1150px;margin:28px auto;padding:0 20px}.hero{display:flex;justify-content:space-between;gap:20px;align-items:end;margin-bottom:22px}
-.actions{display:flex;gap:10px}h1{font-size:38px;letter-spacing:-1.5px;margin:0 0 6px}.sub{color:var(--muted)}
-button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-radius:12px;font-weight:700;cursor:pointer}
+.actions{display:flex;gap:10px;align-items:center}h1{font-size:38px;letter-spacing:-1.5px;margin:0 0 6px}.sub{color:var(--muted)}
+
+/* GEÜPGRADEDE KNOPPEN STYLING */
+button{border:0;background:var(--accent);color:#fff;padding:12px 20px;border-radius:12px;font-weight:700;cursor:pointer;transition:all 0.2s ease;font-size:14px}
+button:active{transform:scale(0.97)}
+.btn-primary{background:var(--primary);box-shadow:0 4px 12px rgba(0,122,255,0.2)}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-secondary{background:#f2f2f7;color:var(--accent);border:1px solid var(--line)}
+.btn-secondary:hover{background:#e5e5ea}
+
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}.label{color:var(--muted);font-size:13px}.value{font-size:30px;font-weight:850;margin-top:7px}.green{color:#16803c}
 .section{margin-top:18px;display:grid;grid-template-columns:1.4fr .9fr;gap:18px}.title{font-size:19px;font-weight:800;margin-bottom:15px}
 .bars{display:flex;align-items:end;gap:12px;height:220px;padding:10px 0 0}.barwrap{flex:1;height:100%;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:7px}.bar{width:100%;max-width:55px;border-radius:9px 9px 4px 4px;background:#111}.barwrap small{color:var(--muted)}
 .tip{padding:15px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px}.tip strong{display:block;margin-bottom:5px}.tip span{color:var(--muted);font-size:14px}
-.tables{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.table{border:1px solid var(--line);border-radius:14px;padding:15px;text-align:center}.dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;background:#22a559}.busy .dot{background:#e5a100}.empty .dot{background:#bbb}
-.modal{display:none;position:fixed;inset:0;background:#0007;place-items:center;padding:20px}.modalbox{background:#fff;padding:25px;border-radius:18px;width:min(430px,100%)}input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;margin:7px 0 14px} 
+.tables{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.table{border:1px solid var(--line);border-radius:14px;padding:15px;text-align:center;background:var(--card)}.dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;background:#22a559}.busy .dot{background:#e5a100}.empty .dot{background:#bbb}
+
+/* GEÜPGRADEDE POP-UP STYLING */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);place-items:center;padding:20px;z-index:9999}
+.modalbox{background:#fff;padding:30px;border-radius:24px;width:min(440px,100%);box-shadow:0 20px 40px rgba(0,0,0,0.15)}
+.modalbox h2{margin-top:0;font-size:24px;letter-spacing:-0.5px}
+input,select{width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;margin:8px 0 18px;font-size:15px;background:#f9f9fb;transition:all 0.2s ease;color:var(--text)}
+input:focus,select:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 4px rgba(0,122,255,0.1)}
+
 @media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.section{grid-template-columns:1fr}.tables{grid-template-columns:repeat(2,1fr)}.hero{align-items:start;flex-direction:column}h1{font-size:31px}}
 </style>
 </head>
@@ -27,8 +42,8 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 <section class="hero">
 <div><h1>Goedenavond 👋</h1><div class="sub">Hier is wat er vandaag in je restaurant gebeurt.</div></div>
 <div class="actions">
-  <button onclick="openTableModal()" style="background:#007aff">🪑 ＋ Tafel</button>
-  <button onclick="openModal()">＋ Reservering</button>
+  <button class="btn-secondary" onclick="openTableModal()">🪑 ＋ Tafel</button>
+  <button class="btn-primary" onclick="openModal()">＋ Reservering</button>
 </div>
 </section>
 
@@ -53,19 +68,22 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-rad
 
 <!-- MODAL: NIEUWE RESERVERING -->
 <div class="modal" id="modal"><div class="modalbox"><h2>Nieuwe reservering</h2>
-<label>Naam</label><input id="name" placeholder="Bijv. Emma">
-<label>Aantal personen</label><select id="people"><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
-<label>Tijd</label><input id="time" type="time" value="20:30">
-<button onclick="addBooking()">Toevoegen</button>
-<button onclick="closeModal()" style="background:#eee;color:#111;margin-left:6px">Annuleren</button>
+<label style="font-weight:600;font-size:14px;">Naam van de gast</label><input id="name" placeholder="Bijv. Emma">
+<label style="font-weight:600;font-size:14px;">Aantal personen</label><select id="people"><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+<label style="font-weight:600;font-size:14px;">Tijdstip</label><input id="time" type="time" value="20:30">
+<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
+  <button class="btn-secondary" onclick="closeModal()" style="padding:12px 18px;">Annuleren</button>
+  <button class="btn-primary" onclick="addBooking()" style="padding:12px 24px;">Toevoegen</button>
+</div>
 </div></div>
 
 <!-- MODAL: NIEUWE TAFEL -->
 <div class="modal" id="tableModal"><div class="modalbox"><h2>Nieuwe tafel toevoegen</h2>
-<label>Tafel Naam</label><input id="tableName" placeholder="Bijv. Tafel 2">
-<label>Aantal stoelen</label><select id="tableSeats"><option>2</option><option>4</option><option>6</option><option>8</option></select>
-<button onclick="addTable()">Tafel Toevoegen</button>
-<button onclick="closeTableModal()" style="background:#eee;color:#111;margin-left:6px">Annuleren</button>
+<label style="font-weight:600;font-size:14px;">Tafel Naam</label><input id="tableName" placeholder="Bijv. Tafel 2">
+<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
+  <button class="btn-secondary" onclick="closeTableModal()" style="padding:12px 18px;">Annuleren</button>
+  <button class="btn-primary" onclick="addTable()" style="padding:12px 24px;">Tafel Opslaan</button>
+</div>
 </div></div>
 
 <script>
