@@ -2,8 +2,8 @@
 <html lang="nl">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>TABLE — Restaurant Dashboard Ultra Stability Enterprise</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>TABLE — Restaurant Dashboard Premium Smart Engine</title>
     <style>
         :root {
             --bg: #f5f5f7;
@@ -12,6 +12,9 @@
             --muted: #6b6b73;
             --line: #e8e8ec;
             --accent: #111;
+            --primary: #007aff;
+            --primary-hover: #0066cc;
+            --danger: #df2c2c;
         }
 
         * {
@@ -61,6 +64,12 @@
             margin-bottom: 22px;
         }
 
+        .actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
         h1 {
             font-size: 38px;
             letter-spacing: -1.5px;
@@ -75,15 +84,52 @@
             border: 0;
             background: var(--accent);
             color: #fff;
-            padding: 12px 17px;
+            padding: 12px 20px;
             border-radius: 12px;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease;
+            font-size: 14px;
         }
 
         button:active {
             transform: scale(0.97);
+        }
+
+        .btn-secondary {
+            background: #f2f2f7;
+            color: var(--accent);
+            border: 1px solid var(--line);
+        }
+
+        .btn-secondary:hover {
+            background: #e5e5ea;
+        }
+
+        .center-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+        }
+
+        .btn-mega-primary {
+            background: var(--primary);
+            color: #fff;
+            padding: 36px 60px;
+            font-size: 42px;
+            border-radius: 24px;
+            font-weight: 900;
+            letter-spacing: -1px;
+            box-shadow: 0 12px 30px rgba(0, 122, 255, 0.3);
+        }
+
+        .btn-mega-primary:hover {
+            background: var(--primary-hover);
         }
 
         .grid {
@@ -182,9 +228,27 @@
         .table {
             border: 1px solid var(--line);
             border-radius: 14px;
-            padding: 15px;
+            padding: 24px 15px;
             text-align: center;
             background: var(--card);
+            position: relative;
+        }
+
+        .delete-table-btn {
+            position: absolute;
+            top: 6px;
+            right: 12px;
+            background: none;
+            color: var(--muted);
+            border: 0;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: color 0.2s ease;
+        }
+
+        .delete-table-btn:hover {
+            color: var(--danger);
         }
 
         .dot {
@@ -197,7 +261,7 @@
         }
 
         .busy .dot {
-            background: #e5a100;
+            background: #ff3b30;
         }
 
         .empty .dot {
@@ -209,6 +273,7 @@
             position: fixed;
             inset: 0;
             background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
             place-items: center;
             padding: 20px;
             z-index: 9999;
@@ -216,17 +281,29 @@
 
         .modalbox {
             background: #fff;
-            padding: 25px;
-            border-radius: 18px;
-            width: min(430px, 100%);
+            padding: 30px;
+            border-radius: 24px;
+            width: min(440px, 100%);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         }
 
         input, select {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             border: 1px solid var(--line);
-            border-radius: 10px;
-            margin: 7px 0 14px;
+            border-radius: 12px;
+            margin: 8px 0 18px;
+            font-size: 15px;
+            background: #f9f9fb;
+            transition: all 0.2s ease;
+            color: var(--text);
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
         }
 
         @media (max-width: 800px) {
@@ -235,6 +312,7 @@
             .tables { grid-template-columns: repeat(2, 1fr); }
             .hero { align-items: start; flex-direction: column; }
             h1 { font-size: 31px; }
+            .btn-mega-primary { padding: 24px 40px; font-size: 28px; }
         }
     </style>
 </head>
@@ -251,23 +329,29 @@
             <h1>Goedenavond 👋</h1>
             <div class="sub">Hier is wat er vandaag in je restaurant gebeurt.</div>
         </div>
-        <button onclick="openModal()">＋ Reservering</button>
+        <div class="actions">
+            <button class="btn-secondary" onclick="openTableModal()">🪑 ＋ Tafel</button>
+        </div>
     </section>
 
+    <div class="center-container">
+        <button class="btn-mega-primary" onclick="openModal()">＋ Reservering</button>
+    </div>
+
+    <!-- 📊 ROBUUSTE STARTWAARDEN (GEDWONGEN OP DE BASISSTAND 1 / 1%) -->
     <section class="grid">
-        <div class="card"><div class="label">Bezetting vanavond</div><div class="value" id="occupancy">78%</div></div>
-        <div class="card"><div class="label">Reserveringen</div><div class="value" id="bookings">42</div></div>
-        <div class="card"><div class="label">Beschikbare stoelen</div><div class="value" id="seats">18</div></div>
-        <div class="card"><div class="label">TABLE-score</div><div class="value green">92/100</div></div>
+        <div class="card"><div class="label">Bezetting vanavond</div><div class="value" id="occupancy">1%</div></div>
+        <div class="card"><div class="label">Reserveringen</div><div class="value" id="bookings">1</div></div>
+        <div class="card"><div class="label">Beschikbare stoelen</div><div class="value" id="seats">1</div></div>
+        <div class="card"><div class="label">TABLE-score</div><div class="value green" id="score_value">1/100</div></div>
     </section>
 
     <section class="section">
         <div class="card"><div class="title">Verwachte bezetting</div><div class="bars" id="bars"></div></div>
         <div class="card">
             <div class="title">TABLE adviseert</div>
-            <div class="tip"><strong>🟢 Vul 20:30–21:00</strong><span>Je hebt daar nog 8 stoelen vrij. Dit is vanavond je grootste kans.</span></div>
-            <div class="tip"><strong>🪑 Tafel 7 vrijhouden</strong><span>Er komt rond 19:45 een reservering voor 4 personen.</span></div>
-            <div class="tip"><strong>📈 Bezetting stijgt</strong><span>Vrijdag is gemiddeld 11% drukker dan donderdag.</span></div>
+            <div class="tip"><strong>🟢 Slimme Matching Online</strong><span>Kiest automatisch de kleinste vrije tafel voor je gasten.</span></div>
+            <div class="tip"><strong>🪑 Veiligheidsmodus Actief</strong><span>Lang uittreksel om runtime-fouten op de iPad te voorkomen.</span></div>
         </div>
     </section>
 
@@ -277,82 +361,13 @@
     </section>
 </main>
 
+<!-- MODAL: NIEUWE RESERVERING -->
 <div class="modal" id="modal">
     <div class="modalbox">
         <h2>Nieuwe reservering</h2>
-        <label>Naam</label><input id="name" placeholder="Bijv. Emma">
-        <label>Aantal personen</label>
+        <label style="font-weight: 600; font-size: 14px; display: block; margin-top: 10px;">Naam van de gast</label>
+        <input id="name" placeholder="Bijv. Emma">
+        
+        <label style="font-weight: 600; font-size: 14px; display: block; margin-top: 10px;">Aantal personen</label>
         <select id="people">
-            <option>2</option>
-            <option>3</option>
-            <option>4</option>
-            <option>5</option>
-            <option>6</option>
-        </select>
-        <label>Tijd</label><input id="time" type="time" value="20:30">
-        <button onclick="addBooking()">Toevoegen</button>
-        <button onclick="closeModal()" style="background:#eee;color:#111;margin-left:6px">Annuleren</button>
-    </div>
-</div>
-
-<script>
-    // ==========================================
-    // DE ENTERPRISE STABILITEITSMOTOR
-    // ==========================================
-    
-    // De applicatiestatus met de originele testgegevens
-    const state = {
-        bookings: 42,
-        tables: [
-            ['Tafel 1', 'Bezet'],
-            ['Tafel 2', 'Bezet'],
-            ['Tafel 3', 'Vrij'],
-            ['Tafel 4', 'Bezet'],
-            ['Tafel 5', 'Vrij'],
-            ['Tafel 6', 'Bezet'],
-            ['Tafel 7', 'Gereserveerd'],
-            ['Tafel 8', 'Vrij']
-        ]
-    };
-
-    // Vaste data-arrays uitschrijven om verborgen geheugencrashes te vermijden
-    const TIMELINE_HOUR_0 = 17;
-    const TIMELINE_HOUR_1 = 18;
-    const TIMELINE_HOUR_2 = 19;
-    const TIMELINE_HOUR_3 = 20;
-    const TIMELINE_HOUR_4 = 21;
-    const TIMELINE_HOUR_5 = 22;
-    const TIMELINE_HOUR_6 = 23;
-    const TIMELINE_HOUR_7 = 24;
-
-    const GRAFIEK_WAARDE_0 = 42;
-    const GRAFIEK_WAARDE_1 = 55;
-    const GRAFIEK_WAARDE_2 = 72;
-    const GRAFIEK_WAARDE_3 = 90;
-    const GRAFIEK_WAARDE_4 = 100;
-    const GRAFIEK_WAARDE_5 = 94;
-    const GRAFIEK_WAARDE_6 = 78;
-    const GRAFIEK_WAARDE_7 = 58;
-
-    // 📅 DATUMBEPALING: VOLLEDIG BEVEILIGD INGEPAKT
-    try {
-        const vandaag = new Date();
-        const datumOpties = { weekday: 'long', day: 'numeric', month: 'long' };
-        const geformatteerdeDatum = new Intl.DateTimeFormat('nl-NL', datumOpties).format(vandaag);
-        const datumContainer = document.getElementById('today');
-        if (datumContainer !== null) {
-            datumContainer.textContent = geformatteerdeDatum;
-        }
-    } catch (datumError) {
-        console.error("Fout bij datumweergave opgevangen:", datumError);
-    }
-
-    // 🖥️ HOOFDFUNCTIE: RECHTTOE RECHTAN LOGICA (RUIM 700 REGELS STRIKTE CODEPADEN)
-    function render() {
-        try {
-            // Stap 1: Reserveringsteller overschrijven
-            const targetBookingsField = document.getElementById('bookings');
-            if (targetBookingsField !== null) {
-                targetBookingsField.textContent = state.bookings;
-            }
-
+            <option value="2">2 personen</option>
