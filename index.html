@@ -48,22 +48,16 @@ button:active{transform:scale(0.97)}
 .tip{padding:15px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px}.tip strong{display:block;margin-bottom:5px}.tip span{color:var(--muted);font-size:14px}
 .tables{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.table{border:1px solid var(--line);border-radius:14px;padding:15px;text-align:center;background:var(--card)}.dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;background:#22a559}.busy .dot{background:#e5a100}.empty .dot{background:#bbb}
 
-/* 📥 GECORRIGEERDE POP-UP EN ANIMATIE STYLING */
+/* 📥 STANDAARD SNELLE POP-UP STYLING ZONDER ANIMATIES */
 .modal{
   display:none;
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,0);
-  backdrop-filter:blur(0px);
+  background:rgba(0,0,0,0.4);
+  backdrop-filter:blur(4px);
   place-items:center;
   padding:20px;
   z-index:9999;
-  transition: background 0.3s ease, backdrop-filter 0.3s ease;
-}
-.modal.show {
-  display: grid !important;
-  background: rgba(0,0,0,0.4);
-  backdrop-filter:blur(4px);
 }
 .modalbox{
   background:#fff;
@@ -71,13 +65,6 @@ button:active{transform:scale(0.97)}
   border-radius:24px;
   width:min(440px,100%);
   box-shadow:0 20px 40px rgba(0,0,0,0.15);
-  transform: scale(0.8) translateY(30px);
-  opacity: 0;
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
-}
-.modal.show .modalbox {
-  transform: scale(1) translateY(0);
-  opacity: 1;
 }
 input,select{width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;margin:8px 0 18px;font-size:15px;background:#f9f9fb;transition:all 0.2s ease;color:var(--text)}
 input:focus,select:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 4px rgba(0,122,255,0.1)}
@@ -148,25 +135,21 @@ document.getElementById('bookings').textContent=state.bookings;
 document.getElementById('tables').innerHTML=state.tables.map(([n,s])=>{
 let c=s==='Bezet'?'busy':s==='Vrij'?'empty':'';
 return `<div class="table ${c}"><div><span class="dot"></span>${s}</div><strong>${n}</strong></div>`}).join('');
-const vals=;
+const vals=[42,55,72,90,100,94,78,58];
 document.getElementById('bars').innerHTML=vals.map((v,i)=>`<div class="barwrap"><div class="bar" style="height:${v*1.75}px" title="${v}%"></div><small>${17+i}:00</small></div>`).join('');
 }
 
 function openModal(){
-  const m = document.getElementById('modal');
-  m.classList.add('show');
+  document.getElementById('modal').style.display = 'grid';
 }
 function closeModal(){
-  const m = document.getElementById('modal');
-  m.classList.remove('show');
+  document.getElementById('modal').style.display = 'none';
 }
 function openTableModal(){
-  const m = document.getElementById('tableModal');
-  m.classList.add('show');
+  document.getElementById('tableModal').style.display = 'grid';
 }
 function closeTableModal(){
-  const m = document.getElementById('tableModal');
-  m.classList.remove('show');
+  document.getElementById('tableModal').style.display = 'none';
 }
 
 function addTable(){
@@ -180,8 +163,8 @@ function addBooking(){
 const name=document.getElementById('name').value.trim();
 if(!name){alert('Vul een naam in.');return}
 state.bookings++;
-const free=state.tables.findIndex(x=>x==='Vrij');
-if(free>=0)state.tables[free]='Gereserveerd';
+const free=state.tables.findIndex(x=>x[1]==='Vrij');
+if(free>=0)state.tables[free][1]='Gereserveerd';
 closeModal();render();
 }
 render();
