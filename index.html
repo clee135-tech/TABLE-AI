@@ -17,8 +17,6 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 20px;border-rad
 button:active{transform:scale(0.97)}
 .btn-secondary{background:#f2f2f7;color:var(--accent);border:1px solid var(--line)}
 .btn-secondary:hover{background:#e5e5ea}
-.btn-danger{background:#ff3b30;color:#fff;padding: 12px 18px;border-radius:12px;}
-.btn-danger:hover{background:#d32f2f}
 
 /* DE GIGANTISCHE CENTRALE KNOP */
 .center-container {
@@ -49,9 +47,11 @@ button:active{transform:scale(0.97)}
 .bars{display:flex;align-items:end;gap:12px;height:220px;padding:10px 0 0}.barwrap{flex:1;height:100%;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:7px}.bar{width:100%;max-width:55px;border-radius:9px 9px 4px 4px;background:#111}.barwrap small{color:var(--muted)}
 .tip{padding:15px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px}.tip strong{display:block;margin-bottom:5px}.tip span{color:var(--muted);font-size:14px}
 
-/* TAFEL INDELING */
+/* TAFEL OVERZICHT MET INGEBOUWDE VERWIJDERKNOP (✕) PER TAFEL */
 .tables{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.table{border:1px solid var(--line);border-radius:14px;padding:18px 15px;text-align:center;background:var(--card)}
+.table{border:1px solid var(--line);border-radius:14px;padding:18px 15px;text-align:center;background:var(--card);position:relative}
+.delete-table-btn{position:absolute;top:6px;right:10px;background:none;color:var(--muted);border:0;padding:2px;font-size:14px;cursor:pointer;font-weight:bold;transition:color 0.2s ease}
+.delete-table-btn:hover{color:var(--danger)}
 .dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;background:#22a559}.busy .dot{background:#ff3b30}.empty .dot{background:#bbb}
 
 /* POP-UP STYLING */
@@ -74,16 +74,6 @@ button:active{transform:scale(0.97)}
 }
 input,select{width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;margin:8px 0 18px;font-size:15px;background:#f9f9fb;transition:all 0.2s ease;color:var(--text)}
 input:focus,select:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 4px rgba(0,122,255,0.1)}
-
-/* DESIGN VOOR DE EXTRA RESETCONTAINER ONDERAAN DE APP */
-.bottom-reset-container {
-  margin-top: 25px;
-  display: flex;
-  justify-content: flex-end;
-  padding: 10px 0;
-}
-
-@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.section{grid-template-columns:1fr}.tables{grid-template-columns:repeat(2,1fr)}.hero{align-items:start;flex-direction:column}h1{font-size:31px}.btn-mega-primary{padding:24px 40px;font-size:28px}.bottom-reset-container{justify-content:center}}
 </style>
 </head>
 <body>
@@ -96,7 +86,7 @@ input:focus,select:focus{outline:none;border-color:var(--primary);background:#ff
 </div>
 </section>
 
-<!-- DE CENTRALE BLUWE KNOP (GEHEEL SCHOON EN ZONDER RESETKNOP DANEEVAST) -->
+<!-- DE CENTRALE BLAUWE KNOP (ZONDER VERSTORENDE RESETKNOPPEN) -->
 <div class="center-container">
   <button class="btn-mega-primary" onclick="openModal()">＋ Reservering</button>
 </div>
@@ -118,11 +108,6 @@ input:focus,select:focus{outline:none;border-color:var(--primary);background:#ff
 </section>
 
 <section class="card" style="margin-top:18px"><div class="title">Tafeloverzicht</div><div class="tables" id="tables"></div></section>
-
-<!-- 🧹 DE RESETKNOP IS VERPLAATST EN STAAT NU HELEMAAL ONDERAAN DE WEBSITE -->
-<div class="bottom-reset-container">
-  <button class="btn-danger" onclick="clearAllBookings()">🧹 Reset Reserveringen</button>
-</div>
 </main>
 
 <!-- MODAL: NIEUWE RESERVERING -->
@@ -153,7 +138,6 @@ input:focus,select:focus{outline:none;border-color:var(--primary);background:#ff
 </div></div>
 
 <script>
-// 1. De basismotor start op met Tafel 1
 const state={bookings:1, tables:[
   ['Tafel 1', 'Vrij', 4]
 ]};
@@ -163,16 +147,19 @@ document.getElementById('today').textContent=new Intl.DateTimeFormat('nl-NL',{we
 function render(){
 document.getElementById('bookings').textContent=state.bookings;
 
-document.getElementById('tables').innerHTML=state.tables.map(([n,s,seats]) => {
+// Bouw het tafeloverzicht op met een werkend kruisje (✕) per tafel
+document.getElementById('tables').innerHTML=state.tables.map(([n,s,seats], index)=>{
   let c=s==='Bezet'?'busy':s==='Vrij'?'empty':s==='Gereserveerd'?'busy':'';
   return `<div class="table ${c}">
+            <span class="delete-table-btn" onclick="removeTable(${index})">✕</span>
             <div><span class="dot"></span>${s}</div>
             <strong>${n}</strong><br>
             <small style="color:var(--muted); font-size: 12px;">${seats || 4} stoelen</small>
           </div>`
 }).join('');
 
-const vals=;
+// De getallen voor de grafiek staan er foutloos in
+const vals=[42,55,72,90,100,94,78,58];
 document.getElementById('bars').innerHTML=vals.map((v,i)=>`<div class="barwrap"><div class="bar" style="height:${v*1.75}px" title="${v}%"></div><small>${17+i}:00</small></div>`).join('');
 }
 
@@ -195,3 +182,15 @@ render();
 function addBooking(){
 const name=document.getElementById('name').value.trim();
 const aantalPersonen=parseInt(document.getElementById('people').value);
+if(!name){alert('Vul een naam in.');return}
+
+let geldigeTafels = [];
+state.tables.forEach((tabel, index) => {
+  if (tabel[1] === 'Vrij' && tabel[2] >= aantalPersonen) {
+    geldigeTafels.push({ index: index, seats: tabel[2] });
+  }
+});
+
+if (geldigeTafels.length > 0) {
+  geldigeTafels.sort((a, b) => a.seats - b.seats);
+  let besteTafelIndex = geldigeTafels[0].index;
