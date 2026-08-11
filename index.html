@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>TABLE — Restaurant Dashboard Premium</title>
+    <title>TABLE — Restaurant Dashboard Ultra Stability</title>
     <style>
         :root {
             --bg: #f5f5f7;
@@ -334,19 +334,18 @@
     </div>
 
     <section class="grid">
-        <div class="card"><div class="label">Bezetting vanavond</div><div class="value" id="occupancy">1%</div></div>
-        <div class="card"><div class="label">Reserveringen</div><div class="value" id="bookings">1</div></div>
-        <div class="card"><div class="label">Beschikbare stoelen</div><div class="value" id="seats">1</div></div>
-        <div class="card"><div class="label">TABLE-score</div><div class="value green">1/100</div></div>
+        <div class="card"><div class="label">Bezetting vanavond</div><div class="value" id="occupancy">0%</div></div>
+        <div class="card"><div class="label">Reserveringen</div><div class="value" id="bookings">0</div></div>
+        <div class="card"><div class="label">Beschikbare stoelen</div><div class="value" id="seats">14</div></div>
+        <div class="card"><div class="label">TABLE-score</div><div class="value green" id="score_value">100/100</div></div>
     </section>
 
     <section class="section">
         <div class="card"><div class="title">Verwachte bezetting</div><div class="bars" id="bars"></div></div>
         <div class="card">
             <div class="title">TABLE adviseert</div>
-            <div class="tip"><strong>🟢 Vul 20:30–21:00</strong><span>Je hebt daar nog 8 stoelen vrij. Dit is vanavond je grootste kans.</span></div>
-            <div class="tip"><strong>🪑 Tafel 7 vrijhouden</strong><span>Er komt rond 19:45 een reservering voor 4 personen.</span></div>
-            <div class="tip"><strong>📈 Bezetting stijgt</strong><span>Vrijdag is gemiddeld 11% drukker dan donderdag.</span></div>
+            <div class="tip"><strong>🟢 Vul 20:30–21:00</strong><span>Je hebt daar nog stoelen vrij. Dit is vanavond je grootste kans.</span></div>
+            <div class="tip"><strong>🪑 Structuur Online</strong><span>Het databasesysteem draait op de uitgebreide iPad-beveiligingsmodus.</span></div>
         </div>
     </section>
 
@@ -360,10 +359,10 @@
 <div class="modal" id="modal">
     <div class="modalbox">
         <h2>Nieuwe reservering</h2>
-        <label style="font-weight: 600; font-size: 14px;">Naam van de gast</label>
+        <label style="font-weight: 600; font-size: 14px; display: block; margin-top: 10px;">Naam van de gast</label>
         <input id="name" placeholder="Bijv. Emma">
         
-        <label style="font-weight: 600; font-size: 14px;">Aantal personen</label>
+        <label style="font-weight: 600; font-size: 14px; display: block; margin-top: 10px;">Aantal personen</label>
         <select id="people">
             <option value="2">2 personen</option>
             <option value="3">3 personen</option>
