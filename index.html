@@ -17,15 +17,14 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 20px;border-rad
 button:active{transform:scale(0.97)}
 .btn-secondary{background:#f2f2f7;color:var(--accent);border:1px solid var(--line)}
 .btn-secondary:hover{background:#e5e5ea}
-.btn-danger{background:#ff3b30;color:#fff}
+.btn-danger{background:#ff3b30;color:#fff;padding: 12px 18px;border-radius:12px;}
 .btn-danger:hover{background:#d32f2f}
 
-/* DE GIGANTISCHE CENTRALE KNOP EN ACTIONS */
+/* DE GIGANTISCHE CENTRALE KNOP */
 .center-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 15px;
   margin: 30px 0;
   padding: 20px;
   background: var(--card);
@@ -76,7 +75,15 @@ button:active{transform:scale(0.97)}
 input,select{width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;margin:8px 0 18px;font-size:15px;background:#f9f9fb;transition:all 0.2s ease;color:var(--text)}
 input:focus,select:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 4px rgba(0,122,255,0.1)}
 
-@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.section{grid-template-columns:1fr}.tables{grid-template-columns:repeat(2,1fr)}.hero{align-items:start;flex-direction:column}h1{font-size:31px}.btn-mega-primary{padding:24px 40px;font-size:28px}.center-container{flex-direction:column}}
+/* DESIGN VOOR DE EXTRA RESETCONTAINER ONDERAAN DE APP */
+.bottom-reset-container {
+  margin-top: 25px;
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 0;
+}
+
+@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.section{grid-template-columns:1fr}.tables{grid-template-columns:repeat(2,1fr)}.hero{align-items:start;flex-direction:column}h1{font-size:31px}.btn-mega-primary{padding:24px 40px;font-size:28px}.bottom-reset-container{justify-content:center}}
 </style>
 </head>
 <body>
@@ -89,10 +96,9 @@ input:focus,select:focus{outline:none;border-color:var(--primary);background:#ff
 </div>
 </section>
 
-<!-- DE REUSACHTIGE CENTRALE RESERVERINGSKNOP EN DE HERSTELDE RESETKNOP -->
+<!-- DE CENTRALE BLUWE KNOP (GEHEEL SCHOON EN ZONDER RESETKNOP DANEEVAST) -->
 <div class="center-container">
   <button class="btn-mega-primary" onclick="openModal()">＋ Reservering</button>
-  <button class="btn-secondary btn-danger" onclick="clearAllBookings()" style="padding: 15px; border-radius: 16px;">🧹 Reset Boekingen</button>
 </div>
 
 <section class="grid">
@@ -112,6 +118,11 @@ input:focus,select:focus{outline:none;border-color:var(--primary);background:#ff
 </section>
 
 <section class="card" style="margin-top:18px"><div class="title">Tafeloverzicht</div><div class="tables" id="tables"></div></section>
+
+<!-- 🧹 DE RESETKNOP IS VERPLAATST EN STAAT NU HELEMAAL ONDERAAN DE WEBSITE -->
+<div class="bottom-reset-container">
+  <button class="btn-danger" onclick="clearAllBookings()">🧹 Reset Reserveringen</button>
+</div>
 </main>
 
 <!-- MODAL: NIEUWE RESERVERING -->
@@ -142,6 +153,7 @@ input:focus,select:focus{outline:none;border-color:var(--primary);background:#ff
 </div></div>
 
 <script>
+// 1. De basismotor start op met Tafel 1
 const state={bookings:1, tables:[
   ['Tafel 1', 'Vrij', 4]
 ]};
@@ -151,7 +163,7 @@ document.getElementById('today').textContent=new Intl.DateTimeFormat('nl-NL',{we
 function render(){
 document.getElementById('bookings').textContent=state.bookings;
 
-document.getElementById('tables').innerHTML=state.tables.map(([n,s,seats])=>{
+document.getElementById('tables').innerHTML=state.tables.map(([n,s,seats]) => {
   let c=s==='Bezet'?'busy':s==='Vrij'?'empty':s==='Gereserveerd'?'busy':'';
   return `<div class="table ${c}">
             <div><span class="dot"></span>${s}</div>
@@ -160,7 +172,7 @@ document.getElementById('tables').innerHTML=state.tables.map(([n,s,seats])=>{
           </div>`
 }).join('');
 
-const vals=[42,55,72,90,100,94,78,58];
+const vals=;
 document.getElementById('bars').innerHTML=vals.map((v,i)=>`<div class="barwrap"><div class="bar" style="height:${v*1.75}px" title="${v}%"></div><small>${17+i}:00</small></div>`).join('');
 }
 
@@ -180,13 +192,6 @@ document.getElementById('tableName').value='';
 render();
 }
 
-/* 🛠️ OPTIMALE TAFEL ALGORITME FIX */
 function addBooking(){
 const name=document.getElementById('name').value.trim();
 const aantalPersonen=parseInt(document.getElementById('people').value);
-if(!name){alert('Vul een naam in.');return}
-
-// 1. Maak een lijst met indices van alle tafels die 'Vrij' zijn én groot genoeg zijn
-let geldigeTafels = [];
-state.tables.forEach((tabel, index) => {
-  if (tabel[1] === 'Vrij' && tabel[2] >= aantalPersonen) {
