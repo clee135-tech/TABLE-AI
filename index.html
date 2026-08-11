@@ -1,759 +1,129 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TABLE — Restaurant Dashboard</title>
+<style>
+:root{--bg:#f5f5f7;--card:#fff;--text:#161616;--muted:#6b6b73;--line:#e8e8ec;--accent:#111}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+header{padding:28px max(20px,calc((100% - 1150px)/2));display:flex;justify-content:space-between;align-items:center;background:#fff;border-bottom:1px solid var(--line)}
+.logo{font-size:28px;font-weight:900;letter-spacing:-1px}.date{color:var(--muted);font-size:14px}
+main{max-width:1150px;margin:28px auto;padding:0 20px}.hero{display:flex;justify-content:space-between;gap:20px;align-items:end;margin-bottom:22px}
+h1{font-size:38px;letter-spacing:-1.5px;margin:0 0 6px}.sub{color:var(--muted)}
+button{border:0;background:var(--accent);color:#fff;padding:12px 17px;border-radius:12px;font-weight:700;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}.label{color:var(--muted);font-size:13px}.value{font-size:30px;font-weight:850;margin-top:7px}.green{color:#16803c}
+.section{margin-top:18px;display:grid;grid-template-columns:1.4fr .9fr;gap:18px}.title{font-size:19px;font-weight:800;margin-bottom:15px}
+.bars{display:flex;align-items:end;gap:12px;height:220px;padding:10px 0 0}.barwrap{flex:1;height:100%;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:7px}.bar{width:100%;max-width:55px;border-radius:9px 9px 4px 4px;background:#111}.barwrap small{color:var(--muted)}
+.tip{padding:15px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px}.tip strong{display:block;margin-bottom:5px}.tip span{color:var(--muted);font-size:14px}
+.tables{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.table{border:1px solid var(--line);border-radius:14px;padding:15px;text-align:center}.dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;background:#22a559}.busy .dot{background:#e5a100}.empty .dot{background:#bbb}
+.modal{display:none;position:fixed;inset:0;background:#0007;place-items:center;padding:20px}.modalbox{background:#fff;padding:25px;border-radius:18px;width:min(430px,100%)}input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;margin:7px 0 14px} 
+@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.section{grid-template-columns:1fr}.tables{grid-template-columns:repeat(2,1fr)}.hero{align-items:start;flex-direction:column}h1{font-size:31px}}
+</style>
+</head>
+<body>
+<header><div class="logo">TABLE</div><div class="date" id="today"></div></header>
+<main>
+<section class="hero">
+<div><h1>Goedenavond 👋</h1><div class="sub">Hier is wat er vandaag in je restaurant gebeurt.</div></div>
+<button onclick="openModal()">＋ Reservering</button>
+</section>
+
+<section class="grid">
+<div class="card"><div class="label">Bezetting vanavond</div><div class="value" id="occupancy">78%</div></div>
+<div class="card"><div class="label">Reserveringen</div><div class="value" id="bookings">42</div></div>
+<div class="card"><div class="label">Beschikbare stoelen</div><div class="value" id="seats">18</div></div>
+<div class="card"><div class="label">TABLE-score</div><div class="value green">92/100</div></div>
+</section>
+
+<section class="section">
+<div class="card"><div class="title">Verwachte bezetting</div><div class="bars" id="bars"></div></div>
+<div class="card"><div class="title">TABLE adviseert</div>
+<div class="tip"><strong>🟢 Vul 20:30–21:00</strong><span>Je hebt daar nog 8 stoelen vrij. Dit is vanavond je grootste kans.</span></div>
+<div class="tip"><strong>🪑 Tafel 7 vrijhouden</strong><span>Er komt rond 19:45 een reservering voor 4 personen.</span></div>
+<div class="tip"><strong>📈 Bezetting stijgt</strong><span>Vrijdag is gemiddeld 11% drukker dan donderdag.</span></div>
+</div>
+</section>
+
+<section class="card" style="margin-top:18px"><div class="title">Tafeloverzicht</div><div class="tables" id="tables"></div></section>
+</main>
+
+<div class="modal" id="modal"><div class="modalbox"><h2>Nieuwe reservering</h2>
+<label>Naam</label><input id="name" placeholder="Bijv. Emma">
+<label>Aantal personen</label><select id="people"><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+<label>Tijd</label><input id="time" type="time" value="20:30">
+<button onclick="addBooking()">Toevoegen</button>
+<button onclick="closeModal()" style="background:#eee;color:#111;margin-left:6px">Annuleren</button>
+</div></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+  const SUPABASE_URL = "https://nrfjhxoadepdhlmqfmls.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_G52O2xPyZg4bhAYLj-we7A_Z-efjDeb";
 
-/* =========================================================
-   TABLE — SUPABASE SYNC
-   ========================================================= */
-
-const SUPABASE_URL =
-    "https://nrfjhxoadepdhlmqfmls.supabase.co";
-
-const SUPABASE_KEY =
-    "sb_publishable_G52O2xPyZg4bhAYLj-we7A_Z-efjDeb";
-const RESTAURANT_ID = "1";
-const RESERVATIONS_URL =
-    SUPABASE_URL + "/rest/v1/reservations";
-
-const TABLES_URL =
-    SUPABASE_URL + "/rest/v1/restaurant_tables";
-
-const RESTAURANTS_URL =
-    SUPABASE_URL + "/rest/v1/restaurants";
-
-
-/* =========================================================
-   LOCAL STATE
-   ========================================================= */
-
-let tables = [];
-let bookings = [];
-
-let selectedBookingId = null;
-let restaurantId = null;.
-
-
-/* =========================================================
-   SUPABASE HEADERS
-   ========================================================= */
-
-function supabaseHeaders(){
-
-    return {
-
-        "apikey": SUPABASE_KEY,
-
-        "Authorization":
-            "Bearer " + SUPABASE_KEY,
-
-        "Content-Type":
-            "application/json",
-
-        "Accept":
-            "application/json"
-
-    };
-
+  const supabaseClient =
+    supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const state={bookings:42, tables:[
+['Tafel 1','Bezet'],['Tafel 2','Bezet'],['Tafel 3','Vrij'],['Tafel 4','Bezet'],
+['Tafel 5','Vrij'],['Tafel 6','Bezet'],['Tafel 7','Gereserveerd'],['Tafel 8','Vrij']
+]};
+document.getElementById('today').textContent=new Intl.DateTimeFormat('nl-NL',{weekday:'long',day:'numeric',month:'long'}).format(new Date());
+function render(){
+document.getElementById('bookings').textContent=state.bookings;
+document.getElementById('tables').innerHTML=state.tables.map(([n,s])=>{
+let c=s==='Bezet'?'busy':s==='Vrij'?'empty':'';
+return `<div class="table ${c}"><div><span class="dot"></span>${s}</div><strong>${n}</strong></div>`}).join('');
+const vals=[42,55,72,90,100,94,78,58];
+document.getElementById('bars').innerHTML=vals.map((v,i)=>`<div class="barwrap"><div class="bar" style="height:${v*1.75}px" title="${v}%"></div><small>${17+i}:00</small></div>`).join('');
 }
-
-
-/* =========================================================
-   SUPABASE REQUEST
-   ========================================================= */
-
-async function supabaseFetch(
-    url,
-    options = {}
-){
-
-    const response =
-        await fetch(
-            url,
-            {
-
-                ...options,
-
-                headers:{
-                    ...supabaseHeaders(),
-                    ...(options.headers || {})
-                }
-
-            }
-        );
-
-
-    if(!response.ok){
-
-        const errorText =
-            await response.text();
-
-        console.error(
-            "Supabase error:",
-            response.status,
-            errorText
-        );
-
-        throw new Error(
-            "Supabase fout " +
-            response.status +
-            ": " +
-            errorText
-        );
-
-    }
-
-
-    const text =
-        await response.text();
-
-
-    if(!text){
-
-        return null;
-
-    }
-
-
-    try{
-
-        return JSON.parse(text);
-
-    }catch{
-
-        return text;
-
-    }
-
+function openModal(){document.getElementById('modal').style.display='grid'}
+function closeModal(){document.getElementById('modal').style.display='none'}
+function addBooking(){
+const name=document.getElementById('name').value.trim();
+if(!name){alert('Vul een naam in.');return}
+state.bookings++;
+const free=state.tables.findIndex(x=>x[1]==='Vrij');
+if(free>=0)state.tables[free][1]='Gereserveerd';
+closeModal();render();
 }
-
-
-/* =========================================================
-   START
-   ========================================================= */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
-
-        updateDate();
-
-        updateGreeting();
-
-        showToast(
-            "⏳ Reserveringen laden..."
-        );
-
-        try{
-
-            await loadRestaurant();
-
-            await loadTables();
-
-            await loadBookings();
-
-            render();
-
-            hideToast();
-
-        }catch(error){
-
-            console.error(error);
-
-            showToast(
-                "❌ Supabase kon de reserveringen niet laden"
-            );
-
-        }
-
+render();
+  async function testDatabase() {
+    const { data, error } = await supabaseClient.from("restaurants").select("*");
+    if (error) {
+      console.error("Fout bij verbinden:", error);
+      return;
     }
-);
+    console.log("TABLE is succesvol verbonden!", data);
+  }
+  testDatabase();
+  async function addReservation(klantNaam, aantalPersonen, tijdstip) {
+    const { data, error } = await supabaseClient
+      .from("reservations")
+      .insert({
+        restaurant_id: 1,
+        customer_name: klantNaam,
+        people: aantalPersonen,
+        reservation_time: tijdstip
+      })
+      .select();
 
-
-/* =========================================================
-   RESTAURANT LADEN
-   ========================================================= */
-
-async function loadRestaurant(){
-
-    try{
-
-        const data =
-            await supabaseFetch(
-                RESTAURANTS_URL +
-                "?select=*&limit=1"
-            );
-
-
-        if(
-            Array.isArray(data) &&
-            data.length
-        ){
-
-            restaurantId =
-                data[0].id;
-
-            console.log(
-                "Restaurant:",
-                restaurantId
-            );
-
-        }else{
-
-            console.warn(
-                "Geen restaurant gevonden."
-            );
-
-        }
-
-    }catch(error){
-
-        console.error(
-            "Restaurant laden mislukt:",
-            error
-        );
-
+    if (error) {
+      console.error("Fout bij opslaan reservering:", error);
+      return;
     }
+    console.log("Reservering succesvol opgeslagen!", data);
+  }
+  async function changeTable(reservationId, newTableId) {
+    const { error } = await supabaseClient
+      .from("reservations")
+      .update({ table_id: newTableId })
+      .eq("id", reservationId);
 
-}
-
-
-/* =========================================================
-   TAFELS LADEN
-   ========================================================= */
-
-async function loadTables(){
-
-    try{
-
-        const data =
-            await supabaseFetch(
-                TABLES_URL +
-                "?select=*"
-            );
-
-
-        if(
-            Array.isArray(data)
-        ){
-
-            tables =
-                data.map(
-                    table => ({
-
-                        id:
-                            table.id,
-
-                        number:
-                            table.table_number ??
-                            table.number ??
-                            table.name ??
-                            table.id,
-
-                        capacity:
-                            Number(
-                                table.capacity ??
-                                table.seats ??
-                                table.people ??
-                                4
-                            )
-
-                    })
-                );
-
-        }
-
-        console.log(
-            "Tafels geladen:",
-            tables
-        );
-
-    }catch(error){
-
-        console.error(
-            "Tafels laden mislukt:",
-            error
-        );
-
-        /*
-           Als restaurant_tables nog niet goed
-           is ingericht, gebruiken we tijdelijke
-           tafels zodat de dashboard niet crasht.
-        */
-
-        tables = [
-
-            {
-                id:1,
-                number:1,
-                capacity:2
-            },
-
-            {
-                id:2,
-                number:2,
-                capacity:2
-            },
-
-            {
-                id:3,
-                number:3,
-                capacity:4
-            },
-
-            {
-                id:4,
-                number:4,
-                capacity:4
-            },
-
-            {
-                id:5,
-                number:5,
-                capacity:4
-            },
-
-            {
-                id:6,
-                number:6,
-                capacity:6
-            },
-
-            {
-                id:7,
-                number:7,
-                capacity:6
-            },
-
-            {
-                id:8,
-                number:8,
-                capacity:8
-            }
-
-        ];
-
+    if (error) {
+      console.error("Fout bij wisselen van tafel:", error);
+      return;
     }
-
-}
-
-
-/* =========================================================
-   RESERVERINGEN LADEN
-   ========================================================= */
-
-async function loadBookings(){
-
-    const url =
-        RESERVATIONS_URL +
-        "?select=id,restaurant_id,table_id,customer_name,text,people,reservation_time" +
-        "&order=reservation_time.asc";
-
-
-    const data =
-        await supabaseFetch(
-            url
-        );
-
-
-    if(
-        !Array.isArray(data)
-    ){
-
-        bookings = [];
-
-        return;
-
-    }
-
-
-    bookings =
-        data.map(
-            reservation => ({
-
-                id:
-                    reservation.id,
-
-                restaurantId:
-                    reservation.restaurant_id,
-
-                tableId:
-                    reservation.table_id,
-
-                name:
-                    reservation.customer_name ||
-                    "Onbekende gast",
-
-                text:
-                    reservation.text || "",
-
-                people:
-                    Number(
-                        reservation.people || 0
-                    ),
-
-                time:
-                    formatTime(
-                        reservation.reservation_time
-                    ),
-
-                rawTime:
-                    reservation.reservation_time
-
-            })
-        );
-
-
-    console.log(
-        "Reserveringen geladen:",
-        bookings
-    );
-
-}
-
-
-/* =========================================================
-   TIJD OMZETTEN
-   ========================================================= */
-
-function formatTime(
-    value
-){
-
-    if(!value){
-
-        return "";
-
-    }
-
-
-    /*
-       Als Supabase alleen HH:MM teruggeeft
-    */
-
-    if(
-        /^\d{2}:\d{2}$/.test(
-            String(value)
-        )
-    ){
-
-        return String(value);
-
-    }
-
-
-    const date =
-        new Date(value);
-
-
-    if(
-        isNaN(
-            date.getTime()
-        )
-    ){
-
-        return String(value)
-            .slice(0,5);
-
-    }
-
-
-    return date
-        .toLocaleTimeString(
-            "nl-NL",
-            {
-                hour:"2-digit",
-                minute:"2-digit"
-            }
-        );
-
-}
-
-
-/* =========================================================
-   RESERVERING MAKEN IN SUPABASE
-   ========================================================= */
-
-async function createBooking(){
-
-    const name =
-        document.getElementById(
-            "newName"
-        ).value.trim();
-
-
-    const time =
-        document.getElementById(
-            "newTime"
-        ).value;
-
-
-    const people =
-        Number(
-            document.getElementById(
-                "newPeople"
-            ).value
-        );
-
-
-    const selectedTable =
-        document.getElementById(
-            "newTable"
-        ).value;
-
-
-    if(!name){
-
-        showToast(
-            "Vul een naam in."
-        );
-
-        return;
-
-    }
-
-
-    if(!time){
-
-        showToast(
-            "Vul een tijd in."
-        );
-
-        return;
-
-    }
-
-
-    if(!restaurantId){
-
-        showToast(
-            "❌ Geen restaurant gevonden."
-        );
-
-        return;
-
-    }
-
-
-    let tableId = null;
-
-
-    if(
-        selectedTable === "auto"
-    ){
-
-        const best =
-            findBestTable(
-                people
-            );
-
-
-        if(best){
-
-            tableId =
-                best.id;
-
-        }
-
-    }else{
-
-        tableId =
-            selectedTable;
-
-    }
-
-
-    /*
-       Controleer tafel
-    */
-
-    if(tableId){
-
-        const table =
-            tables.find(
-                t =>
-                    String(t.id) ===
-                    String(tableId)
-            );
-
-
-        if(
-            table &&
-            table.capacity < people
-        ){
-
-            showToast(
-                "Deze tafel is te klein."
-            );
-
-            return;
-
-        }
-
-
-        if(
-            isTableReserved(
-                tableId
-            )
-        ){
-
-            showToast(
-                "Deze tafel is al gereserveerd."
-            );
-
-            return;
-
-        }
-
-    }
-
-
-    /*
-       DATETIME voor Supabase
-
-       We gebruiken vandaag + gekozen tijd.
-    */
-
-    const reservationTime =
-        createReservationDateTime(
-            time
-        );
-
-
-    const payload = {
-
-        restaurant_id:
-            restaurantId,
-
-        table_id:
-            tableId,
-
-        customer_name:
-            name,
-
-        text:
-            "",
-
-        people:
-            people,
-
-        reservation_time:
-            reservationTime
-
-    };
-
-
-    try{
-
-        showToast(
-            "⏳ Reservering opslaan..."
-        );
-
-
-        await supabaseFetch(
-            RESERVATIONS_URL,
-            {
-
-                method:"POST",
-
-                headers:{
-                    "Prefer":
-                        "return=representation"
-                },
-
-                body:
-                    JSON.stringify(
-                        payload
-                    )
-
-            }
-        );
-
-
-        await loadBookings();
-
-        render();
-
-        closeNewBooking();
-
-        document.getElementById(
-            "newName"
-        ).value = "";
-
-
-        showToast(
-            "✓ Reservering opgeslagen"
-        );
-
-
-    }catch(error){
-
-        console.error(error);
-
-        showToast(
-            "❌ Reservering kon niet worden opgeslagen"
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   DATETIME MAKEN
-   ========================================================= */
-
-function createReservationDateTime(
-    time
-){
-
-    const now =
-        new Date();
-
-
-    const [
-        hours,
-        minutes
-    ] =
-        time.split(":");
-
-
-    now.setHours(
-        Number(hours),
-        Number(minutes),
-        0,
-        0
-    );
-
-
-    /*
-       Supabase krijgt ISO datum/tijd.
-    */
-
-    return now.toISOString();
-
-}
-
-
-/* =========================================================
-   RESERVERING OPSLAAN / WIJZIGEN
-   ========================================================= */
-
-async function saveBooking(){
-
-    const booking =
-        bookings.find(
-            b =>
-                String(b.id) ===
-                String(
-                    selectedBookingId
-                )
-        );
-
-
-    if(!booking){
-
-        return;
-
-    }
-
-
-    const name =
-        document.getElementById
+    console.log("Tafel succesvol bijgewerkt in de cloud!");
+  }
+
+</script>
+</body></html>
