@@ -2102,1111 +2102,492 @@ select:focus{
 
 <div id="toast"></div>
 
-<script>
+<<script>
 
-/* =====================================================
-   DATA
-===================================================== */
+/* =========================================================
+   TABLE — SUPABASE SYNC
+   ========================================================= */
 
-const TABLE_KEY =
-    "TABLE_TABLES_V6";
+const SUPABASE_URL =
+    "https://nrfjhxoadepdhlmqfmls.supabase.co";
 
-const BOOKING_KEY =
-    "TABLE_BOOKINGS_V6";
+const SUPABASE_KEY =
+    "sb_publishable_G52O2xPyZg4bhAYLj-we7A_Z-efjDeb";
 
-const DEFAULT_TABLES = [
+const RESERVATIONS_URL =
+    SUPABASE_URL + "/rest/v1/reservations";
 
-    {
-        id:1,
-        number:1,
-        capacity:2
-    },
+const TABLES_URL =
+    SUPABASE_URL + "/rest/v1/restaurant_tables";
 
-    {
-        id:2,
-        number:2,
-        capacity:2
-    },
+const RESTAURANTS_URL =
+    SUPABASE_URL + "/rest/v1/restaurants";
 
-    {
-        id:3,
-        number:3,
-        capacity:4
-    },
 
-    {
-        id:4,
-        number:4,
-        capacity:4
-    },
+/* =========================================================
+   LOCAL STATE
+   ========================================================= */
 
-    {
-        id:5,
-        number:5,
-        capacity:4
-    },
+let tables = [];
+let bookings = [];
 
-    {
-        id:6,
-        number:6,
-        capacity:6
-    },
+let selectedBookingId = null;
+let restaurantId = null;
 
-    {
-        id:7,
-        number:7,
-        capacity:6
-    },
 
-    {
-        id:8,
-        number:8,
-        capacity:8
-    }
+/* =========================================================
+   SUPABASE HEADERS
+   ========================================================= */
 
-];
+function supabaseHeaders(){
 
-let tables =
-    loadData(
-        TABLE_KEY,
-        DEFAULT_TABLES
-    );
+    return {
 
-let bookings =
-    loadData(
-        BOOKING_KEY,
-        []
-    );
+        "apikey": SUPABASE_KEY,
 
-let selectedBookingId =
-    null;
+        "Authorization":
+            "Bearer " + SUPABASE_KEY,
 
-/* =====================================================
-   STORAGE
-===================================================== */
+        "Content-Type":
+            "application/json",
 
-function loadData(
-    key,
-    fallback
+        "Accept":
+            "application/json"
+
+    };
+
+}
+
+
+/* =========================================================
+   SUPABASE REQUEST
+   ========================================================= */
+
+async function supabaseFetch(
+    url,
+    options = {}
 ){
 
-    try{
+    const response =
+        await fetch(
+            url,
+            {
 
-        const saved =
-            localStorage.getItem(key);
+                ...options,
 
-        if(!saved){
+                headers:{
+                    ...supabaseHeaders(),
+                    ...(options.headers || {})
+                }
 
-            return JSON.parse(
-                JSON.stringify(
-                    fallback
-                )
-            );
+            }
+        );
 
-        }
 
-        const data =
-            JSON.parse(saved);
+    if(!response.ok){
 
-        return Array.isArray(data)
-            ? data
-            : [];
+        const errorText =
+            await response.text();
 
-    }catch(error){
+        console.error(
+            "Supabase error:",
+            response.status,
+            errorText
+        );
 
-        return JSON.parse(
-            JSON.stringify(
-                fallback
-            )
+        throw new Error(
+            "Supabase fout " +
+            response.status +
+            ": " +
+            errorText
         );
 
     }
 
+
+    const text =
+        await response.text();
+
+
+    if(!text){
+
+        return null;
+
+    }
+
+
+    try{
+
+        return JSON.parse(text);
+
+    }catch{
+
+        return text;
+
+    }
+
 }
 
-function saveData(){
 
-    localStorage.setItem(
-        TABLE_KEY,
-        JSON.stringify(
-            tables
-        )
-    );
-
-    localStorage.setItem(
-        BOOKING_KEY,
-        JSON.stringify(
-            bookings
-        )
-    );
-
-}
-
-/* =====================================================
+/* =========================================================
    START
-===================================================== */
+   ========================================================= */
 
 document.addEventListener(
     "DOMContentLoaded",
-    () => {
+    async () => {
 
         updateDate();
 
         updateGreeting();
 
-        render();
+        showToast(
+            "⏳ Reserveringen laden..."
+        );
+
+        try{
+
+            await loadRestaurant();
+
+            await loadTables();
+
+            await loadBookings();
+
+            render();
+
+            hideToast();
+
+        }catch(error){
+
+            console.error(error);
+
+            showToast(
+                "❌ Supabase kon de reserveringen niet laden"
+            );
+
+        }
 
     }
 );
 
-/* =====================================================
-   RENDER EVERYTHING
-===================================================== */
 
-function render(){
+/* =========================================================
+   RESTAURANT LADEN
+   ========================================================= */
 
-    renderTables();
+async function loadRestaurant(){
 
-    renderBookings();
+    try{
 
-    renderChart();
+        const data =
+            await supabaseFetch(
+                RESTAURANTS_URL +
+                "?select=*&limit=1"
+            );
 
-    updateStats();
 
-    updateNewTableSelector();
+        if(
+            Array.isArray(data) &&
+            data.length
+        ){
+
+            restaurantId =
+                data[0].id;
+
+            console.log(
+                "Restaurant:",
+                restaurantId
+            );
+
+        }else{
+
+            console.warn(
+                "Geen restaurant gevonden."
+            );
+
+        }
+
+    }catch(error){
+
+        console.error(
+            "Restaurant laden mislukt:",
+            error
+        );
+
+    }
 
 }
 
-/* =====================================================
-   DATE
-===================================================== */
 
-function updateDate(){
+/* =========================================================
+   TAFELS LADEN
+   ========================================================= */
 
-    document.getElementById(
-        "date"
-    ).textContent =
-        new Date().toLocaleDateString(
-            "nl-NL",
+async function loadTables(){
+
+    try{
+
+        const data =
+            await supabaseFetch(
+                TABLES_URL +
+                "?select=*"
+            );
+
+
+        if(
+            Array.isArray(data)
+        ){
+
+            tables =
+                data.map(
+                    table => ({
+
+                        id:
+                            table.id,
+
+                        number:
+                            table.table_number ??
+                            table.number ??
+                            table.name ??
+                            table.id,
+
+                        capacity:
+                            Number(
+                                table.capacity ??
+                                table.seats ??
+                                table.people ??
+                                4
+                            )
+
+                    })
+                );
+
+        }
+
+        console.log(
+            "Tafels geladen:",
+            tables
+        );
+
+    }catch(error){
+
+        console.error(
+            "Tafels laden mislukt:",
+            error
+        );
+
+        /*
+           Als restaurant_tables nog niet goed
+           is ingericht, gebruiken we tijdelijke
+           tafels zodat de dashboard niet crasht.
+        */
+
+        tables = [
+
             {
-                weekday:"long",
-                day:"numeric",
-                month:"long"
+                id:1,
+                number:1,
+                capacity:2
+            },
+
+            {
+                id:2,
+                number:2,
+                capacity:2
+            },
+
+            {
+                id:3,
+                number:3,
+                capacity:4
+            },
+
+            {
+                id:4,
+                number:4,
+                capacity:4
+            },
+
+            {
+                id:5,
+                number:5,
+                capacity:4
+            },
+
+            {
+                id:6,
+                number:6,
+                capacity:6
+            },
+
+            {
+                id:7,
+                number:7,
+                capacity:6
+            },
+
+            {
+                id:8,
+                number:8,
+                capacity:8
             }
-        );
 
-}
-
-function updateGreeting(){
-
-    const hour =
-        new Date().getHours();
-
-    let greeting;
-
-    if(hour < 12){
-
-        greeting =
-            "Goedemorgen ☀️";
-
-    }else if(hour < 18){
-
-        greeting =
-            "Goedemiddag 👋";
-
-    }else{
-
-        greeting =
-            "Goedenavond 🌙";
+        ];
 
     }
 
-    document.getElementById(
-        "greeting"
-    ).textContent =
-        greeting;
-
 }
 
-/* =====================================================
-   TABLE STATUS
-===================================================== */
 
-function getBookingForTable(
-    tableId
-){
+/* =========================================================
+   RESERVERINGEN LADEN
+   ========================================================= */
 
-    return bookings.find(
-        booking =>
-            Number(
-                booking.tableId
-            ) === Number(tableId)
-    ) || null;
+async function loadBookings(){
 
-}
+    const url =
+        RESERVATIONS_URL +
+        "?select=id,restaurant_id,table_id,customer_name,text,people,reservation_time" +
+        "&order=reservation_time.asc";
 
-function isTableReserved(
-    tableId,
-    ignoreBookingId = null
-){
 
-    return bookings.some(
-        booking =>
-
-            Number(
-                booking.tableId
-            ) === Number(tableId)
-
-            &&
-
-            Number(
-                booking.id
-            ) !== Number(
-                ignoreBookingId
-            )
-    );
-
-}
-
-/* =====================================================
-   RENDER TABLES
-===================================================== */
-
-function renderTables(){
-
-    const container =
-        document.getElementById(
-            "tables"
+    const data =
+        await supabaseFetch(
+            url
         );
 
-    if(!tables.length){
-
-        container.innerHTML = `
-            <div class="empty">
-                Nog geen tafels.
-            </div>
-        `;
-
-        return;
-
-    }
-
-    const sortedTables =
-        [...tables].sort(
-            (a,b) =>
-                a.number - b.number
-        );
-
-    container.innerHTML =
-        sortedTables.map(
-            table => {
-
-                const booking =
-                    getBookingForTable(
-                        table.id
-                    );
-
-                const reserved =
-                    Boolean(
-                        booking
-                    );
-
-                if(reserved){
-
-                    /*
-                       🔴 RODE TAFEL
-                       KLIKBAAR
-                    */
-
-                    return `
-
-                    <div
-                        class="restaurant-table reserved"
-                        onclick="openBooking(${booking.id})"
-                    >
-
-                        <button
-                            class="delete-table"
-                            onclick="
-                                event.stopPropagation();
-                                deleteTable(${table.id});
-                            "
-                        >
-                            ×
-                        </button>
-
-                        <div class="table-number">
-
-                            Tafel ${escapeHtml(
-                                table.number
-                            )}
-
-                        </div>
-
-                        <div class="table-status">
-
-                            <span class="status-dot"></span>
-
-                            Gereserveerd
-
-                        </div>
-
-                        <div class="table-guest">
-
-                            👤 ${escapeHtml(
-                                booking.name
-                            )}
-
-                        </div>
-
-                        <div class="table-info">
-
-                            🕐 ${escapeHtml(
-                                booking.time
-                            )}
-
-                            ·
-
-                            👥 ${booking.people}
-
-                        </div>
-
-                    </div>
-
-                    `;
-
-                }
-
-                /*
-                   🟢 GROENE TAFEL
-                */
-
-                return `
-
-                <div
-                    class="restaurant-table available"
-                >
-
-                    <button
-                        class="delete-table"
-                        onclick="
-                            event.stopPropagation();
-                            deleteTable(${table.id});
-                        "
-                    >
-                        ×
-                    </button>
-
-                    <div class="table-number">
-
-                        Tafel ${escapeHtml(
-                            table.number
-                        )}
-
-                    </div>
-
-                    <div class="table-status">
-
-                        <span class="status-dot"></span>
-
-                        Beschikbaar
-
-                    </div>
-
-                    <div class="table-info">
-
-                        Max.
-                        ${table.capacity}
-                        personen
-
-                    </div>
-
-                </div>
-
-                `;
-
-            }
-        ).join("");
-
-}
-
-/* =====================================================
-   RENDER BOOKINGS
-===================================================== */
-
-function renderBookings(){
-
-    const container =
-        document.getElementById(
-            "bookingList"
-        );
-
-    if(!bookings.length){
-
-        container.innerHTML = `
-
-            <div class="empty">
-
-                📅
-
-                <br><br>
-
-                Nog geen reserveringen.
-
-            </div>
-
-        `;
-
-        return;
-
-    }
-
-    const sorted =
-        [...bookings].sort(
-            (a,b) =>
-                a.time.localeCompare(
-                    b.time
-                )
-        );
-
-    container.innerHTML =
-        sorted.map(
-            booking => {
-
-                const table =
-                    tables.find(
-                        t =>
-                            Number(t.id) ===
-                            Number(
-                                booking.tableId
-                            )
-                    );
-
-                const initials =
-                    booking.name
-                        .split(" ")
-                        .map(
-                            x =>
-                                x[0]
-                        )
-                        .join("")
-                        .slice(0,2)
-                        .toUpperCase();
-
-                return `
-
-                <button
-                    class="booking"
-                    onclick="openBooking(${booking.id})"
-                >
-
-                    <div class="booking-left">
-
-                        <div class="avatar">
-
-                            ${escapeHtml(
-                                initials
-                            )}
-
-                        </div>
-
-                        <div>
-
-                            <div class="booking-name">
-
-                                ${escapeHtml(
-                                    booking.name
-                                )}
-
-                            </div>
-
-                            <div class="booking-details">
-
-                                🕐 ${escapeHtml(
-                                    booking.time
-                                )}
-
-                                ·
-
-                                👥 ${booking.people}
-
-                                ·
-
-                                ${
-                                    table
-                                        ? `🪑 Tafel ${escapeHtml(
-                                            table.number
-                                        )}`
-                                        : "Geen tafel"
-                                }
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                    <div class="arrow">
-                        ›
-                    </div>
-
-                </button>
-
-                `;
-
-            }
-        ).join("");
-
-}
-
-/* =====================================================
-   OPEN BOOKING
-===================================================== */
-
-function openBooking(
-    bookingId
-){
-
-    const booking =
-        bookings.find(
-            b =>
-                Number(b.id) ===
-                Number(bookingId)
-        );
-
-    if(!booking){
-
-        return;
-
-    }
-
-    selectedBookingId =
-        booking.id;
-
-    document.getElementById(
-        "detailAvatar"
-    ).textContent =
-        getInitials(
-            booking.name
-        );
-
-    document.getElementById(
-        "detailName"
-    ).textContent =
-        booking.name;
-
-    document.getElementById(
-        "detailSub"
-    ).textContent =
-        `${booking.time} · ${booking.people} personen`;
-
-    document.getElementById(
-        "editName"
-    ).value =
-        booking.name;
-
-    document.getElementById(
-        "editTime"
-    ).value =
-        booking.time;
-
-    document.getElementById(
-        "editPeople"
-    ).value =
-        String(
-            booking.people
-        );
-
-    updateEditTableSelector(
-        booking
-    );
-
-    updateCurrentTable(
-        booking
-    );
-
-    showModal(
-        "bookingModal"
-    );
-
-}
-
-/* =====================================================
-   CURRENT TABLE
-===================================================== */
-
-function updateCurrentTable(
-    booking
-){
-
-    const table =
-        tables.find(
-            t =>
-                Number(t.id) ===
-                Number(
-                    booking.tableId
-                )
-        );
-
-    document.getElementById(
-        "currentTable"
-    ).textContent =
-        table
-            ? `Tafel ${table.number} · max. ${table.capacity} personen`
-            : "Geen tafel";
-
-}
-
-/* =====================================================
-   EDIT TABLE SELECTOR
-===================================================== */
-
-function updateEditTableSelector(
-    booking
-){
-
-    const select =
-        document.getElementById(
-            "editTable"
-        );
-
-    let html = `
-
-        <option value="none">
-
-            Geen tafel
-
-        </option>
-
-    `;
-
-    [...tables]
-        .sort(
-            (a,b) =>
-                a.number - b.number
-        )
-        .forEach(
-            table => {
-
-                const reserved =
-                    isTableReserved(
-                        table.id,
-                        booking.id
-                    );
-
-                const tooSmall =
-                    table.capacity <
-                    booking.people;
-
-                const disabled =
-                    reserved ||
-                    tooSmall;
-
-                let extra = "";
-
-                if(tooSmall){
-
-                    extra =
-                        " · te klein";
-
-                }else if(reserved){
-
-                    extra =
-                        " · gereserveerd";
-
-                }
-
-                html += `
-
-                    <option
-
-                        value="${table.id}"
-
-                        ${
-                            Number(
-                                table.id
-                            ) === Number(
-                                booking.tableId
-                            )
-                            ? "selected"
-                            : ""
-                        }
-
-                        ${
-                            disabled
-                            ? "disabled"
-                            : ""
-                        }
-
-                    >
-
-                        Tafel ${escapeHtml(
-                            table.number
-                        )}
-
-                        ·
-
-                        ${table.capacity}
-                        personen
-
-                        ${extra}
-
-                    </option>
-
-                `;
-
-            }
-        );
-
-    select.innerHTML =
-        html;
-
-}
-
-/* =====================================================
-   SAVE BOOKING
-===================================================== */
-
-function saveBooking(){
-
-    const booking =
-        bookings.find(
-            b =>
-                Number(b.id) ===
-                Number(
-                    selectedBookingId
-                )
-        );
-
-    if(!booking){
-
-        return;
-
-    }
-
-    const name =
-        document.getElementById(
-            "editName"
-        ).value.trim();
-
-    const time =
-        document.getElementById(
-            "editTime"
-        ).value;
-
-    const people =
-        Number(
-            document.getElementById(
-                "editPeople"
-            ).value
-        );
-
-    const tableValue =
-        document.getElementById(
-            "editTable"
-        ).value;
-
-    if(!name){
-
-        showToast(
-            "Vul een naam in."
-        );
-
-        return;
-
-    }
-
-    if(!time){
-
-        showToast(
-            "Vul een tijd in."
-        );
-
-        return;
-
-    }
-
-    let tableId =
-        null;
-
-    if(tableValue !== "none"){
-
-        tableId =
-            Number(
-                tableValue
-            );
-
-        const table =
-            tables.find(
-                t =>
-                    Number(t.id) ===
-                    Number(tableId)
-            );
-
-        if(!table){
-
-            showToast(
-                "Tafel bestaat niet."
-            );
-
-            return;
-
-        }
-
-        if(
-            table.capacity <
-            people
-        ){
-
-            showToast(
-                "Deze tafel is te klein."
-            );
-
-            return;
-
-        }
-
-        if(
-            isTableReserved(
-                tableId,
-                booking.id
-            )
-        ){
-
-            showToast(
-                "Deze tafel is al gereserveerd."
-            );
-
-            return;
-
-        }
-
-    }
-
-    const oldTable =
-        booking.tableId;
-
-    booking.name =
-        name;
-
-    booking.time =
-        time;
-
-    booking.people =
-        people;
-
-    booking.tableId =
-        tableId;
-
-    saveData();
-
-    closeBookingModal();
-
-    render();
 
     if(
-        Number(oldTable) !==
-        Number(tableId)
+        !Array.isArray(data)
     ){
 
-        const table =
-            tables.find(
-                t =>
-                    Number(t.id) ===
-                    Number(tableId)
-            );
-
-        showToast(
-            table
-                ? `✓ Verplaatst naar tafel ${table.number}`
-                : "✓ Tafel verwijderd"
-        );
-
-    }else{
-
-        showToast(
-            "✓ Reservering opgeslagen"
-        );
-
-    }
-
-}
-
-/* =====================================================
-   DELETE BOOKING
-===================================================== */
-
-function deleteBooking(){
-
-    const booking =
-        bookings.find(
-            b =>
-                Number(b.id) ===
-                Number(
-                    selectedBookingId
-                )
-        );
-
-    if(!booking){
+        bookings = [];
 
         return;
 
     }
 
-    if(
-        !confirm(
-            `Reservering van ${booking.name} verwijderen?`
-        )
-    ){
-
-        return;
-
-    }
 
     bookings =
-        bookings.filter(
-            b =>
-                Number(b.id) !==
-                Number(
-                    selectedBookingId
-                )
+        data.map(
+            reservation => ({
+
+                id:
+                    reservation.id,
+
+                restaurantId:
+                    reservation.restaurant_id,
+
+                tableId:
+                    reservation.table_id,
+
+                name:
+                    reservation.customer_name ||
+                    "Onbekende gast",
+
+                text:
+                    reservation.text || "",
+
+                people:
+                    Number(
+                        reservation.people || 0
+                    ),
+
+                time:
+                    formatTime(
+                        reservation.reservation_time
+                    ),
+
+                rawTime:
+                    reservation.reservation_time
+
+            })
         );
 
-    saveData();
 
-    closeBookingModal();
-
-    render();
-
-    showToast(
-        "Reservering verwijderd"
+    console.log(
+        "Reserveringen geladen:",
+        bookings
     );
 
 }
 
-/* =====================================================
-   NEW BOOKING
-===================================================== */
 
-function openNewBooking(){
+/* =========================================================
+   TIJD OMZETTEN
+   ========================================================= */
 
-    updateNewTableSelector();
+function formatTime(
+    value
+){
 
-    document.getElementById(
-        "newBookingModal"
-    ).classList.add("show");
+    if(!value){
 
-    document.body.style.overflow =
-        "hidden";
+        return "";
 
-    setTimeout(
-        () =>
-            document.getElementById(
-                "newName"
-            ).focus(),
-        100
-    );
+    }
 
-}
 
-function closeNewBooking(){
+    /*
+       Als Supabase alleen HH:MM teruggeeft
+    */
 
-    document.getElementById(
-        "newBookingModal"
-    ).classList.remove("show");
-
-    document.body.style.overflow =
-        "";
-
-}
-
-/* =====================================================
-   NEW TABLE SELECTOR
-===================================================== */
-
-function updateNewTableSelector(){
-
-    const select =
-        document.getElementById(
-            "newTable"
-        );
-
-    let html = `
-
-        <option value="auto">
-
-            🤖 Automatisch kiezen
-
-        </option>
-
-    `;
-
-    [...tables]
-        .sort(
-            (a,b) =>
-                a.number - b.number
+    if(
+        /^\d{2}:\d{2}$/.test(
+            String(value)
         )
-        .forEach(
-            table => {
+    ){
 
-                const reserved =
-                    isTableReserved(
-                        table.id
-                    );
+        return String(value);
 
-                html += `
+    }
 
-                    <option
-                        value="${table.id}"
-                        ${
-                            reserved
-                            ? "disabled"
-                            : ""
-                        }
-                    >
 
-                        Tafel ${escapeHtml(
-                            table.number
-                        )}
+    const date =
+        new Date(value);
 
-                        ·
 
-                        ${table.capacity}
-                        personen
+    if(
+        isNaN(
+            date.getTime()
+        )
+    ){
 
-                        ${
-                            reserved
-                            ? " · gereserveerd"
-                            : " · beschikbaar"
-                        }
+        return String(value)
+            .slice(0,5);
 
-                    </option>
+    }
 
-                `;
 
+    return date
+        .toLocaleTimeString(
+            "nl-NL",
+            {
+                hour:"2-digit",
+                minute:"2-digit"
             }
         );
 
-    select.innerHTML =
-        html;
-
 }
 
-/* =====================================================
-   CREATE BOOKING
-===================================================== */
 
-function createBooking(){
+/* =========================================================
+   RESERVERING MAKEN IN SUPABASE
+   ========================================================= */
+
+async function createBooking(){
 
     const name =
         document.getElementById(
             "newName"
         ).value.trim();
 
+
     const time =
         document.getElementById(
             "newTime"
         ).value;
+
 
     const people =
         Number(
@@ -3215,10 +2596,12 @@ function createBooking(){
             ).value
         );
 
+
     const selectedTable =
         document.getElementById(
             "newTable"
         ).value;
+
 
     if(!name){
 
@@ -3230,6 +2613,7 @@ function createBooking(){
 
     }
 
+
     if(!time){
 
         showToast(
@@ -3240,18 +2624,30 @@ function createBooking(){
 
     }
 
-    let tableId =
-        null;
+
+    if(!restaurantId){
+
+        showToast(
+            "❌ Geen restaurant gevonden."
+        );
+
+        return;
+
+    }
+
+
+    let tableId = null;
+
 
     if(
-        selectedTable ===
-        "auto"
+        selectedTable === "auto"
     ){
 
         const best =
             findBestTable(
                 people
             );
+
 
         if(best){
 
@@ -3263,30 +2659,28 @@ function createBooking(){
     }else{
 
         tableId =
-            Number(
-                selectedTable
-            );
+            selectedTable;
+
+    }
+
+
+    /*
+       Controleer tafel
+    */
+
+    if(tableId){
 
         const table =
             tables.find(
                 t =>
-                    Number(t.id) ===
-                    Number(tableId)
+                    String(t.id) ===
+                    String(tableId)
             );
 
-        if(!table){
-
-            showToast(
-                "Ongeldige tafel."
-            );
-
-            return;
-
-        }
 
         if(
-            table.capacity <
-            people
+            table &&
+            table.capacity < people
         ){
 
             showToast(
@@ -3296,6 +2690,7 @@ function createBooking(){
             return;
 
         }
+
 
         if(
             isTableReserved(
@@ -3313,675 +2708,199 @@ function createBooking(){
 
     }
 
-    const booking = {
 
-        id:
-            Date.now(),
+    /*
+       DATETIME voor Supabase
 
-        name,
+       We gebruiken vandaag + gekozen tijd.
+    */
 
-        time,
+    const reservationTime =
+        createReservationDateTime(
+            time
+        );
 
-        people,
 
-        tableId
+    const payload = {
+
+        restaurant_id:
+            restaurantId,
+
+        table_id:
+            tableId,
+
+        customer_name:
+            name,
+
+        text:
+            "",
+
+        people:
+            people,
+
+        reservation_time:
+            reservationTime
 
     };
 
-    bookings.push(
-        booking
-    );
 
-    bookings.sort(
-        (a,b) =>
-            a.time.localeCompare(
-                b.time
-            )
-    );
-
-    saveData();
-
-    closeNewBooking();
-
-    document.getElementById(
-        "newName"
-    ).value = "";
-
-    render();
-
-    const table =
-        tables.find(
-            t =>
-                Number(t.id) ===
-                Number(tableId)
-        );
-
-    showToast(
-
-        table
-
-        ? `✓ ${name} geboekt aan tafel ${table.number}`
-
-        : `✓ ${name} toegevoegd`
-
-    );
-
-}
-
-/* =====================================================
-   BEST TABLE
-===================================================== */
-
-function findBestTable(
-    people
-){
-
-    return [...tables]
-
-        .filter(
-            table =>
-                table.capacity >=
-                people
-
-                &&
-
-                !isTableReserved(
-                    table.id
-                )
-        )
-
-        .sort(
-            (a,b) =>
-                a.capacity -
-                b.capacity
-        )[0]
-
-        || null;
-
-}
-
-/* =====================================================
-   TABLE MODAL
-===================================================== */
-
-function openTableModal(){
-
-    document.getElementById(
-        "tableNumber"
-    ).value =
-        getNextTableNumber();
-
-    document.getElementById(
-        "tableModal"
-    ).classList.add("show");
-
-    document.body.style.overflow =
-        "hidden";
-
-}
-
-function closeTableModal(){
-
-    document.getElementById(
-        "tableModal"
-    ).classList.remove("show");
-
-    document.body.style.overflow =
-        "";
-
-}
-
-function createTable(){
-
-    const number =
-        Number(
-            document.getElementById(
-                "tableNumber"
-            ).value
-        );
-
-    const capacity =
-        Number(
-            document.getElementById(
-                "tableCapacity"
-            ).value
-        );
-
-    if(!number){
+    try{
 
         showToast(
-            "Vul een tafelnummer in."
+            "⏳ Reservering opslaan..."
         );
 
-        return;
 
-    }
+        await supabaseFetch(
+            RESERVATIONS_URL,
+            {
 
-    if(
-        tables.some(
-            table =>
-                Number(
-                    table.number
-                ) === number
-        )
-    ){
+                method:"POST",
 
-        showToast(
-            "Dit tafelnummer bestaat al."
-        );
+                headers:{
+                    "Prefer":
+                        "return=representation"
+                },
 
-        return;
-
-    }
-
-    tables.push({
-
-        id:
-            Date.now(),
-
-        number,
-
-        capacity
-
-    });
-
-    saveData();
-
-    closeTableModal();
-
-    render();
-
-    showToast(
-        `✓ Tafel ${number} toegevoegd`
-    );
-
-}
-
-function getNextTableNumber(){
-
-    if(!tables.length){
-
-        return 1;
-
-    }
-
-    return Math.max(
-        ...tables.map(
-            t =>
-                Number(
-                    t.number
-                )
-        )
-    ) + 1;
-
-}
-
-/* =====================================================
-   DELETE TABLE
-===================================================== */
-
-function deleteTable(
-    tableId
-){
-
-    const table =
-        tables.find(
-            t =>
-                Number(t.id) ===
-                Number(tableId)
-        );
-
-    if(!table){
-
-        return;
-
-    }
-
-    if(
-        isTableReserved(
-            table.id
-        )
-    ){
-
-        showToast(
-            "🔴 Deze tafel is gereserveerd en kan niet verwijderd worden."
-        );
-
-        return;
-
-    }
-
-    if(
-        !confirm(
-            `Tafel ${table.number} verwijderen?`
-        )
-    ){
-
-        return;
-
-    }
-
-    tables =
-        tables.filter(
-            t =>
-                Number(t.id) !==
-                Number(tableId)
-        );
-
-    saveData();
-
-    render();
-
-    showToast(
-        `Tafel ${table.number} verwijderd`
-    );
-
-}
-
-/* =====================================================
-   STATS
-===================================================== */
-
-function updateStats(){
-
-    const capacity =
-        tables.reduce(
-            (sum,t) =>
-                sum +
-                Number(
-                    t.capacity
-                ),
-            0
-        );
-
-    const guests =
-        bookings.reduce(
-            (sum,b) =>
-                sum +
-                Number(
-                    b.people
-                ),
-            0
-        );
-
-    const occupancy =
-        capacity
-            ? Math.min(
-                100,
-                Math.round(
-                    guests /
-                    capacity *
-                    100
-                )
-            )
-            : 0;
-
-    const free =
-        Math.max(
-            0,
-            capacity -
-            guests
-        );
-
-    document.getElementById(
-        "occupancy"
-    ).textContent =
-        occupancy + "%";
-
-    document.getElementById(
-        "bookingCount"
-    ).textContent =
-        bookings.length;
-
-    document.getElementById(
-        "freeSeats"
-    ).textContent =
-        free;
-
-    const score =
-        Math.max(
-            0,
-            100 -
-            Math.max(
-                0,
-                occupancy - 80
-            )
-        );
-
-    document.getElementById(
-        "score"
-    ).textContent =
-        score + "/100";
-
-}
-
-/* =====================================================
-   CHART
-===================================================== */
-
-function renderChart(){
-
-    const container =
-        document.getElementById(
-            "chart"
-        );
-
-    const hours = [
-        "17",
-        "18",
-        "19",
-        "20",
-        "21",
-        "22"
-    ];
-
-    const values =
-        hours.map(
-            hour =>
-                bookings
-                    .filter(
-                        booking =>
-                            booking.time &&
-                            booking.time.startsWith(
-                                hour + ":"
-                            )
+                body:
+                    JSON.stringify(
+                        payload
                     )
-                    .reduce(
-                        (sum,b) =>
-                            sum +
-                            Number(
-                                b.people
-                            ),
-                        0
-                    )
-        );
-
-    const max =
-        Math.max(
-            ...values,
-            1
-        );
-
-    container.innerHTML =
-        hours.map(
-            (hour,index) => {
-
-                const height =
-                    values[index] === 0
-
-                    ? 4
-
-                    : Math.max(
-                        8,
-                        values[index] /
-                        max *
-                        100
-                    );
-
-                return `
-
-                    <div class="bar-wrap">
-
-                        <div class="bar-number">
-                            ${values[index]}
-                        </div>
-
-                        <div
-                            class="bar"
-                            style="height:${height}%"
-                        ></div>
-
-                        <small>
-                            ${hour}:00
-                        </small>
-
-                    </div>
-
-                `;
 
             }
-        ).join("");
+        );
 
-}
 
-/* =====================================================
-   MODAL HELPERS
-===================================================== */
+        await loadBookings();
 
-function showModal(
-    id
-){
-
-    document.getElementById(
-        id
-    ).classList.add("show");
-
-    document.body.style.overflow =
-        "hidden";
-
-}
-
-function closeBookingModal(){
-
-    document.getElementById(
-        "bookingModal"
-    ).classList.remove("show");
-
-    document.body.style.overflow =
-        "";
-
-    selectedBookingId =
-        null;
-
-}
-
-function closeBookingOutside(
-    event
-){
-
-    if(
-        event.target ===
-        document.getElementById(
-            "bookingModal"
-        )
-    ){
-
-        closeBookingModal();
-
-    }
-
-}
-
-function closeNewOutside(
-    event
-){
-
-    if(
-        event.target ===
-        document.getElementById(
-            "newBookingModal"
-        )
-    ){
+        render();
 
         closeNewBooking();
 
+        document.getElementById(
+            "newName"
+        ).value = "";
+
+
+        showToast(
+            "✓ Reservering opgeslagen"
+        );
+
+
+    }catch(error){
+
+        console.error(error);
+
+        showToast(
+            "❌ Reservering kon niet worden opgeslagen"
+        );
+
     }
 
 }
 
-function closeTableOutside(
-    event
+
+/* =========================================================
+   DATETIME MAKEN
+   ========================================================= */
+
+function createReservationDateTime(
+    time
 ){
 
-    if(
-        event.target ===
-        document.getElementById(
-            "tableModal"
-        )
-    ){
+    const now =
+        new Date();
 
-        closeTableModal();
 
-    }
+    const [
+        hours,
+        minutes
+    ] =
+        time.split(":");
 
-}
 
-/* =====================================================
-   SCROLL
-===================================================== */
-
-function scrollBookings(){
-
-    document.getElementById(
-        "bookingsSection"
-    ).scrollIntoView({
-        behavior:"smooth"
-    });
-
-}
-
-/* =====================================================
-   INITIALS
-===================================================== */
-
-function getInitials(
-    name
-){
-
-    return name
-
-        .split(" ")
-
-        .map(
-            part =>
-                part[0]
-        )
-
-        .join("")
-
-        .slice(0,2)
-
-        .toUpperCase();
-
-}
-
-/* =====================================================
-   ESCAPE HTML
-===================================================== */
-
-function escapeHtml(
-    value
-){
-
-    return String(value)
-
-        .replaceAll(
-            "&",
-            "&amp;"
-        )
-
-        .replaceAll(
-            "<",
-            "&lt;"
-        )
-
-        .replaceAll(
-            ">",
-            "&gt;"
-        )
-
-        .replaceAll(
-            '"',
-            "&quot;"
-        )
-
-        .replaceAll(
-            "'",
-            "&#039;"
-        );
-
-}
-
-/* =====================================================
-   TOAST
-===================================================== */
-
-let toastTimer;
-
-function showToast(
-    message
-){
-
-    const toast =
-        document.getElementById(
-            "toast"
-        );
-
-    toast.textContent =
-        message;
-
-    toast.classList.add(
-        "show"
+    now.setHours(
+        Number(hours),
+        Number(minutes),
+        0,
+        0
     );
 
-    clearTimeout(
-        toastTimer
-    );
 
-    toastTimer =
-        setTimeout(
-            () => {
+    /*
+       Supabase krijgt ISO datum/tijd.
+    */
 
-                toast.classList.remove(
-                    "show"
-                );
-
-            },
-            2600
-        );
+    return now.toISOString();
 
 }
 
-/* =====================================================
-   ESCAPE KEY
-===================================================== */
 
-document.addEventListener(
-    "keydown",
-    event => {
+/* =========================================================
+   RESERVERING OPSLAAN / WIJZIGEN
+   ========================================================= */
 
-        if(
-            event.key ===
-            "Escape"
-        ){
+async function saveBooking(){
 
-            closeBookingModal();
+    const booking =
+        bookings.find(
+            b =>
+                String(b.id) ===
+                String(
+                    selectedBookingId
+                )
+        );
 
-            closeNewBooking();
 
-            closeTableModal();
+    if(!booking){
 
-        }
+        return;
 
     }
-);
 
-/* =====================================================
-   LIVE DATE
-===================================================== */
 
-setInterval(
-    () => {
+    const name =
+        document.getElementById(
+            "editName"
+        ).value.trim();
 
-        updateDate();
 
-        updateGreeting();
+    const time =
+        document.getElementById(
+            "editTime"
+        ).value;
 
-    },
-    60000
-);
 
-</script>
+    const people =
+        Number(
+            document.getElementById(
+                "editPeople"
+            ).value
+        );
+
+
+    const tableValue =
+        document.getElementById(
+            "editTable"
+        ).value;
+
+
+    if(!name){
+
+        showToast(
+            "Vul een naam in."
+        );
+
+        return;
+
+    }
+
+
+    if(!time){
+
+        showToast(
+            "Vul een tijd in."
+            </script>        
 
 </body>
 </html>
