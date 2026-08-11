@@ -121,7 +121,7 @@ input:focus,select:focus{outline:none;border-color:var(--primary);background:#ff
 </div>
 </div></div>
 
-<!-- MODAL: NIEUWE TAFEL (MET CHIQUE STOELEN-KIEZER) -->
+<!-- MODAL: NIEUWE TAFEL -->
 <div class="modal" id="tableModal"><div class="modalbox"><h2>Nieuwe tafel toevoegen</h2>
 <label style="font-weight:600;font-size:14px;">Tafel Naam</label><input id="tableName" placeholder="Bijv. Tafel 2">
 <label style="font-weight:600;font-size:14px;">Aantal stoelen</label>
@@ -138,7 +138,6 @@ input:focus,select:focus{outline:none;border-color:var(--primary);background:#ff
 </div></div>
 
 <script>
-// We starten met de stabiele basiswaarde van 1 basistafel om browsercrashes te voorkomen
 const state={bookings:1, tables:[
   ['Tafel 1', 'Vrij', 4]
 ]};
@@ -148,7 +147,6 @@ document.getElementById('today').textContent=new Intl.DateTimeFormat('nl-NL',{we
 function render(){
 document.getElementById('bookings').textContent=state.bookings;
 
-// Teken de tafels met naam en het gekozen aantal stoelen
 document.getElementById('tables').innerHTML=state.tables.map(([n,s,seats])=>{
   let c=s==='Bezet'?'busy':s==='Vrij'?'empty':s==='Gereserveerd'?'busy':'';
   return `<div class="table ${c}">
@@ -158,7 +156,6 @@ document.getElementById('tables').innerHTML=state.tables.map(([n,s,seats])=>{
           </div>`
 }).join('');
 
-// 🚀 HIER STAAN DE GETALLEN ROSTVAST INGEVULD. CRASHEN IS ONMOGELIJK.
 const vals=[42,55,72,90,100,94,78,58];
 document.getElementById('bars').innerHTML=vals.map((v,i)=>`<div class="barwrap"><div class="bar" style="height:${v*1.75}px" title="${v}%"></div><small>${17+i}:00</small></div>`).join('');
 }
@@ -179,16 +176,16 @@ document.getElementById('tableName').value='';
 render();
 }
 
+/* 🛠️ HIER STAAT DE FIX: Alleen de status (Vrij -> Gereserveerd) wordt aangepast */
 function addBooking(){
 const name=document.getElementById('name').value.trim();
 if(!name){alert('Vul een naam in.');return}
 state.bookings++;
-const free=state.tables.findIndex(x=>x==='Vrij');
-if(free>=0)state.tables[free]='Gereserveerd';
+const free=state.tables.findIndex(x=>x[1]==='Vrij');
+if(free>=0)state.tables[free][1]='Gereserveerd';
 closeModal();render();
 }
 
-// Start direct op
 render();
 </script>
 </body></html>
