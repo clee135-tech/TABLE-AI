@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TABLE — Restaurant Dashboard</title>
 <style>
-:root{--bg:#f5f5f7;--card:#fff;--text:#161616;--muted:#6b6b73;--line:#e8e8ec;--accent:#111;--primary:#007aff;--primary-hover:#0066cc}
+:root{--bg:#f5f5f7;--card:#fff;--text:#161616;--muted:#6b6b73;--line:#e8e8ec;--accent:#111;--primary:#007aff;--primary-hover:#0066cc;--danger:#df2c2c}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
 header{padding:28px max(20px,calc((100% - 1150px)/2));display:flex;justify-content:space-between;align-items:center;background:#fff;border-bottom:1px solid var(--line)}
 .logo{font-size:28px;font-weight:900;letter-spacing:-1px}.date{color:var(--muted);font-size:14px}
@@ -17,12 +17,15 @@ button{border:0;background:var(--accent);color:#fff;padding:12px 20px;border-rad
 button:active{transform:scale(0.97)}
 .btn-secondary{background:#f2f2f7;color:var(--accent);border:1px solid var(--line)}
 .btn-secondary:hover{background:#e5e5ea}
+.btn-danger{background:#ff3b30;color:#fff}
+.btn-danger:hover{background:#d32f2f}
 
-/* DE GIGANTISCHE CENTRALE KNOP */
+/* DE GIGANTISCHE CENTRALE KNOP EN ACTIONS */
 .center-container {
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 15px;
   margin: 30px 0;
   padding: 20px;
   background: var(--card);
@@ -50,7 +53,7 @@ button:active{transform:scale(0.97)}
 /* TAFEL INDELING */
 .tables{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .table{border:1px solid var(--line);border-radius:14px;padding:18px 15px;text-align:center;background:var(--card)}
-.dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;background:#22a559}.busy .dot{background:#e5a100}.empty .dot{background:#bbb}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;background:#22a559}.busy .dot{background:#ff3b30}.empty .dot{background:#bbb}
 
 /* POP-UP STYLING */
 .modal{
@@ -73,7 +76,7 @@ button:active{transform:scale(0.97)}
 input,select{width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;margin:8px 0 18px;font-size:15px;background:#f9f9fb;transition:all 0.2s ease;color:var(--text)}
 input:focus,select:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 4px rgba(0,122,255,0.1)}
 
-@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.section{grid-template-columns:1fr}.tables{grid-template-columns:repeat(2,1fr)}.hero{align-items:start;flex-direction:column}h1{font-size:31px}.btn-mega-primary{padding:24px 40px;font-size:28px}}
+@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.section{grid-template-columns:1fr}.tables{grid-template-columns:repeat(2,1fr)}.hero{align-items:start;flex-direction:column}h1{font-size:31px}.btn-mega-primary{padding:24px 40px;font-size:28px}.center-container{flex-direction:column}}
 </style>
 </head>
 <body>
@@ -86,9 +89,10 @@ input:focus,select:focus{outline:none;border-color:var(--primary);background:#ff
 </div>
 </section>
 
-<!-- DE REUSACHTIGE CENTRALE RESERVERINGSKNOP -->
+<!-- DE REUSACHTIGE CENTRALE RESERVERINGSKNOP EN DE HERSTELDE RESETKNOP -->
 <div class="center-container">
   <button class="btn-mega-primary" onclick="openModal()">＋ Reservering</button>
+  <button class="btn-secondary btn-danger" onclick="clearAllBookings()" style="padding: 15px; border-radius: 16px;">🧹 Reset Boekingen</button>
 </div>
 
 <section class="grid">
@@ -113,7 +117,7 @@ input:focus,select:focus{outline:none;border-color:var(--primary);background:#ff
 <!-- MODAL: NIEUWE RESERVERING -->
 <div class="modal" id="modal"><div class="modalbox"><h2>Nieuwe reservering</h2>
 <label style="font-weight:600;font-size:14px;">Naam van de gast</label><input id="name" placeholder="Bijv. Emma">
-<label style="font-weight:600;font-size:14px;">Aantal personen</label><select id="people"><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+<label style="font-weight:600;font-size:14px;">Aantal personen</label><select id="people"><option value="2">2 personen</option><option value="3">3 personen</option><option value="4">4 personen</option><option value="5">5 personen</option><option value="6">6 personen</option></select>
 <label style="font-weight:600;font-size:14px;">Tijdstip</label><input id="time" type="time" value="20:30">
 <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
   <button class="btn-secondary" onclick="closeModal()" style="padding:12px 18px;">Annuleren</button>
@@ -176,16 +180,13 @@ document.getElementById('tableName').value='';
 render();
 }
 
-/* 🛠️ HIER STAAT DE FIX: Alleen de status (Vrij -> Gereserveerd) wordt aangepast */
+/* 🛠️ OPTIMALE TAFEL ALGORITME FIX */
 function addBooking(){
 const name=document.getElementById('name').value.trim();
+const aantalPersonen=parseInt(document.getElementById('people').value);
 if(!name){alert('Vul een naam in.');return}
-state.bookings++;
-const free=state.tables.findIndex(x=>x[1]==='Vrij');
-if(free>=0)state.tables[free][1]='Gereserveerd';
-closeModal();render();
-}
 
-render();
-</script>
-</body></html>
+// 1. Maak een lijst met indices van alle tafels die 'Vrij' zijn én groot genoeg zijn
+let geldigeTafels = [];
+state.tables.forEach((tabel, index) => {
+  if (tabel[1] === 'Vrij' && tabel[2] >= aantalPersonen) {
