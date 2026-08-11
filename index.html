@@ -12,13 +12,37 @@ header{padding:28px max(20px,calc((100% - 1150px)/2));display:flex;justify-conte
 main{max-width:1150px;margin:28px auto;padding:0 20px}.hero{display:flex;justify-content:space-between;gap:20px;align-items:end;margin-bottom:22px}
 .actions{display:flex;gap:10px;align-items:center}h1{font-size:38px;letter-spacing:-1.5px;margin:0 0 6px}.sub{color:var(--muted)}
 
-/* GEÜPGRADEDE KNOPPEN STYLING */
+/* ALGEMENE KNOPPEN */
 button{border:0;background:var(--accent);color:#fff;padding:12px 20px;border-radius:12px;font-weight:700;cursor:pointer;transition:all 0.2s ease;font-size:14px}
 button:active{transform:scale(0.97)}
-.btn-primary{background:var(--primary);box-shadow:0 4px 12px rgba(0,122,255,0.2)}
-.btn-primary:hover{background:var(--primary-hover)}
 .btn-secondary{background:#f2f2f7;color:var(--accent);border:1px solid var(--line)}
 .btn-secondary:hover{background:#e5e5ea}
+
+/* 🚀 DE DRIE KEER GROTERE CENTRALE KNOP */
+.center-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 30px 0;
+  padding: 20px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+}
+.btn-mega-primary {
+  background: var(--primary);
+  color: #fff;
+  /* 3x grotere styling */
+  padding: 36px 60px; 
+  font-size: 42px; 
+  border-radius: 24px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  box-shadow: 0 12px 30px rgba(0,122,255,0.3);
+}
+.btn-mega-primary:hover {
+  background: var(--primary-hover);
+}
 
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}.label{color:var(--muted);font-size:13px}.value{font-size:30px;font-weight:850;margin-top:7px}.green{color:#16803c}
 .section{margin-top:18px;display:grid;grid-template-columns:1.4fr .9fr;gap:18px}.title{font-size:19px;font-weight:800;margin-bottom:15px}
@@ -26,14 +50,14 @@ button:active{transform:scale(0.97)}
 .tip{padding:15px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px}.tip strong{display:block;margin-bottom:5px}.tip span{color:var(--muted);font-size:14px}
 .tables{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.table{border:1px solid var(--line);border-radius:14px;padding:15px;text-align:center;background:var(--card)}.dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;background:#22a559}.busy .dot{background:#e5a100}.empty .dot{background:#bbb}
 
-/* GEÜPGRADEDE POP-UP STYLING */
+/* POP-UP STYLING */
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);place-items:center;padding:20px;z-index:9999}
 .modalbox{background:#fff;padding:30px;border-radius:24px;width:min(440px,100%);box-shadow:0 20px 40px rgba(0,0,0,0.15)}
 .modalbox h2{margin-top:0;font-size:24px;letter-spacing:-0.5px}
 input,select{width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;margin:8px 0 18px;font-size:15px;background:#f9f9fb;transition:all 0.2s ease;color:var(--text)}
 input:focus,select:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 4px rgba(0,122,255,0.1)}
 
-@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.section{grid-template-columns:1fr}.tables{grid-template-columns:repeat(2,1fr)}.hero{align-items:start;flex-direction:column}h1{font-size:31px}}
+@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.section{grid-template-columns:1fr}.tables{grid-template-columns:repeat(2,1fr)}.hero{align-items:start;flex-direction:column}h1{font-size:31px}.btn-mega-primary{padding:24px 40px;font-size:28px}}
 </style>
 </head>
 <body>
@@ -43,9 +67,13 @@ input:focus,select:focus{outline:none;border-color:var(--primary);background:#ff
 <div><h1>Goedenavond 👋</h1><div class="sub">Hier is wat er vandaag in je restaurant gebeurt.</div></div>
 <div class="actions">
   <button class="btn-secondary" onclick="openTableModal()">🪑 ＋ Tafel</button>
-  <button class="btn-primary" onclick="openModal()">＋ Reservering</button>
 </div>
 </section>
+
+<!-- 🎯 DE NIEUWE ENORME CENTRALE RESERVERINGSKNOP -->
+<div class="center-container">
+  <button class="btn-mega-primary" onclick="openModal()">＋ Reservering</button>
+</div>
 
 <section class="grid">
 <div class="card"><div class="label">Bezetting vanavond</div><div class="value" id="occupancy">1%</div></div>
@@ -73,7 +101,7 @@ input:focus,select:focus{outline:none;border-color:var(--primary);background:#ff
 <label style="font-weight:600;font-size:14px;">Tijdstip</label><input id="time" type="time" value="20:30">
 <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
   <button class="btn-secondary" onclick="closeModal()" style="padding:12px 18px;">Annuleren</button>
-  <button class="btn-primary" onclick="addBooking()" style="padding:12px 24px;">Toevoegen</button>
+  <button style="background:var(--primary);color:#fff;padding:12px 24px;border-radius:12px;font-weight:700;" onclick="addBooking()">Toevoegen</button>
 </div>
 </div></div>
 
@@ -82,7 +110,7 @@ input:focus,select:focus{outline:none;border-color:var(--primary);background:#ff
 <label style="font-weight:600;font-size:14px;">Tafel Naam</label><input id="tableName" placeholder="Bijv. Tafel 2">
 <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
   <button class="btn-secondary" onclick="closeTableModal()" style="padding:12px 18px;">Annuleren</button>
-  <button class="btn-primary" onclick="addTable()" style="padding:12px 24px;">Tafel Opslaan</button>
+  <button style="background:var(--primary);color:#fff;padding:12px 24px;border-radius:12px;font-weight:700;" onclick="addTable()">Tafel Opslaan</button>
 </div>
 </div></div>
 
