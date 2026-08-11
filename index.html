@@ -18,7 +18,7 @@ button:active{transform:scale(0.97)}
 .btn-secondary{background:#f2f2f7;color:var(--accent);border:1px solid var(--line)}
 .btn-secondary:hover{background:#e5e5ea}
 
-/* 🚀 DE DRIE KEER GROTERE CENTRALE KNOP */
+/* DE DRIE KEER GROTERE CENTRALE KNOP */
 .center-container {
   display: flex;
   justify-content: center;
@@ -32,7 +32,6 @@ button:active{transform:scale(0.97)}
 .btn-mega-primary {
   background: var(--primary);
   color: #fff;
-  /* 3x grotere styling */
   padding: 36px 60px; 
   font-size: 42px; 
   border-radius: 24px;
@@ -41,8 +40,7 @@ button:active{transform:scale(0.97)}
   box-shadow: 0 12px 30px rgba(0,122,255,0.3);
 }
 .btn-mega-primary:hover {
-  background: var(--primary-hover);
-}
+  background: var(--primary-hover)}
 
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}.label{color:var(--muted);font-size:13px}.value{font-size:30px;font-weight:850;margin-top:7px}.green{color:#16803c}
 .section{margin-top:18px;display:grid;grid-template-columns:1.4fr .9fr;gap:18px}.title{font-size:19px;font-weight:800;margin-bottom:15px}
@@ -50,11 +48,41 @@ button:active{transform:scale(0.97)}
 .tip{padding:15px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px}.tip strong{display:block;margin-bottom:5px}.tip span{color:var(--muted);font-size:14px}
 .tables{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.table{border:1px solid var(--line);border-radius:14px;padding:15px;text-align:center;background:var(--card)}.dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;background:#22a559}.busy .dot{background:#e5a100}.empty .dot{background:#bbb}
 
-/* POP-UP STYLING */
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);place-items:center;padding:20px;z-index:9999}
-.modalbox{background:#fff;padding:30px;border-radius:24px;width:min(440px,100%);box-shadow:0 20px 40px rgba(0,0,0,0.15)}
-.modalbox h2{margin-top:0;font-size:24px;letter-spacing:-0.5px}
-input,select{width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;margin:8px 0 18px;font-size:15px;background:#f9f9fb;transition:all 0.2s ease;color:var(--text)}
+/* 📥 NIEUWE POP-UP EN ANIMATIE STYLING */
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0); /* Begint onzichtbaar voor de animatie */
+  backdrop-filter:blur(0px);
+  place-items:center;
+  padding:20px;
+  z-index:9999;
+  transition: background 0.3s ease, backdrop-filter 0.3s ease;
+}
+/* Deze klasse wordt door JavaScript toegevoegd om de achtergrond te dimmen */
+.modal.show {
+  display: grid;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter:blur(4px);
+}
+.modalbox{
+  background:#fff;
+  padding:30px;
+  border-radius:24px;
+  width:min(440px,100%);
+  box-shadow:0 20px 40px rgba(0,0,0,0.15);
+  /* Startpositie van de animatie: kleiner en iets lager */
+  transform: scale(0.8) translateY(30px);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease; /* iPad-stijl bounce effect */
+}
+/* Deze klasse bounct het venster prachtig in beeld */
+.modal.show .modalbox {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+input,select{width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;margin:8px 0 pockets 18px;font-size:15px;background:#f9f9fb;transition:all 0.2s ease;color:var(--text)}
 input:focus,select:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 4px rgba(0,122,255,0.1)}
 
 @media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.section{grid-template-columns:1fr}.tables{grid-template-columns:repeat(2,1fr)}.hero{align-items:start;flex-direction:column}h1{font-size:31px}.btn-mega-primary{padding:24px 40px;font-size:28px}}
@@ -70,7 +98,6 @@ input:focus,select:focus{outline:none;border-color:var(--primary);background:#ff
 </div>
 </section>
 
-<!-- 🎯 DE NIEUWE ENORME CENTRALE RESERVERINGSKNOP -->
 <div class="center-container">
   <button class="btn-mega-primary" onclick="openModal()">＋ Reservering</button>
 </div>
@@ -124,13 +151,27 @@ document.getElementById('bookings').textContent=state.bookings;
 document.getElementById('tables').innerHTML=state.tables.map(([n,s])=>{
 let c=s==='Bezet'?'busy':s==='Vrij'?'empty':'';
 return `<div class="table ${c}"><div><span class="dot"></span>${s}</div><strong>${n}</strong></div>`}).join('');
-const vals=[42,55,72,90,100,94,78,58];
+const vals=;
 document.getElementById('bars').innerHTML=vals.map((v,i)=>`<div class="barwrap"><div class="bar" style="height:${v*1.75}px" title="${v}%"></div><small>${17+i}:00</small></div>`).join('');
 }
-function openModal(){document.getElementById('modal').style.display='grid'}
-function closeModal(){document.getElementById('modal').style.display='none'}
-function openTableModal(){document.getElementById('tableModal').style.display='grid'}
-function closeTableModal(){document.getElementById('tableModal').style.display='none'}
+
+/* ⚡ GEANIMEERDE OPEN- EN SLUITFUNCTIES */
+function openModal(){
+  const m = document.getElementById('modal');
+  m.classList.add('show');
+}
+function closeModal(){
+  const m = document.getElementById('modal');
+  m.classList.remove('show');
+}
+function openTableModal(){
+  const m = document.getElementById('tableModal');
+  m.classList.add('show');
+}
+function closeTableModal(){
+  const m = document.getElementById('tableModal');
+  m.classList.remove('show');
+}
 
 function addTable(){
 const tableName=document.getElementById('tableName').value.trim();
@@ -143,8 +184,8 @@ function addBooking(){
 const name=document.getElementById('name').value.trim();
 if(!name){alert('Vul een naam in.');return}
 state.bookings++;
-const free=state.tables.findIndex(x=>x[1]==='Vrij');
-if(free>=0)state.tables[free][1]='Gereserveerd';
+const free=state.tables.findIndex(x=>x==='Vrij');
+if(free>=0)state.tables[free]='Gereserveerd';
 closeModal();render();
 }
 render();
